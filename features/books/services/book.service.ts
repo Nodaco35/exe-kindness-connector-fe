@@ -8,7 +8,7 @@ export async function getBooks(): Promise<BookResponse> {
   return response.data;
 }
 
-// getBookById
+// getBookById 123123
 export async function getBookById(id: string): Promise<Book> {
   const response = await api.get<Book>(BOOK_ENDPOINTS.GET_DETAIL(id));
 
