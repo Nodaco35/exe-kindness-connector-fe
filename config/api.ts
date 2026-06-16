@@ -1,1 +1,1 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_PROD;
+export const API_URL = "https://exe-kindness-connector-be.onrender.com";
