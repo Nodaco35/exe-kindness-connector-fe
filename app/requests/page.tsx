@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X, MessageSquare, Clock } from "lucide-react";
@@ -27,7 +28,7 @@ export default function RequestsPage() {
       const auth = JSON.parse(authStr);
       setUserId(auth.id);
 
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/exchange", {
+      const res = await axios.get(`${API_URL}/exchange`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setRequests(res.data);
@@ -43,7 +44,7 @@ export default function RequestsPage() {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
 
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/exchange/${id}/status`, { status }, {
+      await axios.patch(`${API_URL}/exchange/${id}/status`, { status }, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       

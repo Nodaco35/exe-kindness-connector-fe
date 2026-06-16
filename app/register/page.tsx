@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, UserPlus } from "lucide-react";
@@ -21,7 +22,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await axios.post("https://exe-kindness-connector-be.onrender.com/auth/register", {
+      await axios.post(`${API_URL}/auth/register`, {
         email,
         password,
         fullName,
@@ -30,7 +31,7 @@ export default function Register() {
       });
 
       // Auto login after register
-      const loginRes = await axios.post("https://exe-kindness-connector-be.onrender.com/auth/login", {
+      const loginRes = await axios.post(`${API_URL}/auth/login`, {
         email,
         password,
       });

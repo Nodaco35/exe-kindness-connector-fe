@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, MapPin, Upload, Search, X, Image as ImageIcon } from "lucide-react";
@@ -137,7 +138,7 @@ export default function PostBook() {
       const uploadPromises = validFiles.map(async (file) => {
         const uploadData = new FormData();
         uploadData.append("file", file);
-        const res = await axios.post("https://exe-kindness-connector-be.onrender.com/upload/image", uploadData, {
+        const res = await axios.post(`${API_URL}/upload/image`, uploadData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         return res.data?.url;
@@ -180,7 +181,7 @@ export default function PostBook() {
         viewCount: 0
       };
 
-      await axios.post("https://exe-kindness-connector-be.onrender.com/book", payload, {
+      await axios.post(`${API_URL}/book`, payload, {
         headers: {
           Authorization: `Bearer ${auth.token}`
         }

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
@@ -52,7 +53,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        await axios.get("https://exe-kindness-connector-be.onrender.com/user/me", {
+        await axios.get(`${API_URL}/user/me`, {
           headers: { Authorization: `Bearer ${auth.token}` },
         });
 

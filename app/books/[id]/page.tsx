@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useState, use } from "react";
 import { BookOpen, MapPin, Users, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -52,7 +53,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
   const fetchBook = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`https://exe-kindness-connector-be.onrender.com/book/${id}`);
+      const res = await axios.get(`${API_URL}/book/${id}`);
       setBook(res.data);
     } catch (err: any) {
       setError("Không tìm thấy sách hoặc đã bị xóa.");
@@ -72,7 +73,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
       }
       const auth = JSON.parse(authStr);
       
-      await axios.post("https://exe-kindness-connector-be.onrender.com/exchange", {
+      await axios.post(`${API_URL}/exchange`, {
         bookId: book._id,
         ownerId: book.owner._id
       }, {
@@ -98,7 +99,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
     try {
       setLoadingRequests(true);
       setShowRequests(true);
-      const res = await axios.get(`https://exe-kindness-connector-be.onrender.com/exchange/book/${book._id}`, {
+      const res = await axios.get(`${API_URL}/exchange/book/${book._id}`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setBookRequests(res.data);
@@ -112,7 +113,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
 
   const handleUpdateStatus = async (exchangeId: string, status: string) => {
     try {
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/exchange/${exchangeId}/status`, { status }, {
+      await axios.patch(`${API_URL}/exchange/${exchangeId}/status`, { status }, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       

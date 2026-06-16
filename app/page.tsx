@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
@@ -15,6 +16,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import bookCategories from "../book_categories.json";
 import BookCard, { Book } from "../components/BookCard";
+import HeroCarousel from "../components/HeroCarousel";
 import styles from "./page.module.scss";
 
 type SubCategory = {
@@ -115,7 +117,7 @@ export default function Home() {
       }
 
       const authData = JSON.parse(stored);
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/user/me", {
+      const res = await axios.get(`${API_URL}/user/me`, {
         headers: { Authorization: `Bearer ${authData.token}` },
       });
 
@@ -134,7 +136,7 @@ export default function Home() {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("https://exe-kindness-connector-be.onrender.com/book");
+      const response = await axios.get(`${API_URL}/book`);
       if (response.data) {
         setBooks(response.data);
       }
@@ -229,58 +231,7 @@ export default function Home() {
 
   return (
     <div className={styles.pageContainer}>
-      <section className={styles.heroSection}>
-        <div className={styles.heroContainer}>
-          <div className={styles.heroContent}>
-            <div className={styles.heroText}>
-              <h1 className={styles.heroTitle}>
-                Trao đổi sách,
-                <br />
-                <span>Chia sẻ tri thức</span>
-              </h1>
-              <p className={styles.heroDesc}>
-                Tham gia cộng đồng những người đọc sách trên toàn quốc. Biến những cuốn sách
-                bạn đã đọc xong thành những chuyến phiêu lưu mới mà không tốn một xu.
-              </p>
-
-              <div className={styles.searchBox}>
-                <div className={styles.searchInputWrapper}>
-                  <Search size={20} className={styles.searchIcon} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Tìm kiếm theo tên sách, tác giả hoặc thể loại..."
-                    className={styles.searchInput}
-                  />
-                </div>
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm("")} className={styles.clearButton}>
-                    Xóa lọc
-                  </button>
-                )}
-              </div>
-
-              <div className={styles.heroActions}>
-                <button className={styles.btnPrimary}>Bắt đầu trao đổi sách</button>
-                <button className={styles.btnOutline}>Cách hoạt động</button>
-              </div>
-            </div>
-
-            <div className={styles.heroImagePlaceholder}>
-              <div className={styles.placeholderBox}>
-                <div className={styles.placeholderBadge}>
-                  <div className={styles.placeholderIcon}>📚</div>
-                  <div className={styles.badgeText}>
-                    <span>Lượt trao đổi</span>
-                    <strong>12,450+</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroCarousel />
 
       <section className={styles.categoriesSection}>
         <div className={styles.categoriesHeader}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState } from "react";
 import { Star } from "lucide-react";
 import axios from "axios";
@@ -27,7 +28,7 @@ export default function RatingModal({ exchangeId, reviewedUserId, onClose, onSuc
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
       await axios.post(
-        "https://exe-kindness-connector-be.onrender.com/review",
+        `${API_URL}/review`,
         {
           exchangeId,
           reviewedUserId,

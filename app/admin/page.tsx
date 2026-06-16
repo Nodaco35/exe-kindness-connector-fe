@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, BookOpen, Ban, CheckCircle, ShieldAlert } from "lucide-react";
@@ -37,9 +38,9 @@ export default function AdminDashboard() {
       const headers = { Authorization: `Bearer ${auth.token}` };
       
       const [statsRes, usersRes, booksRes] = await Promise.all([
-        axios.get("https://exe-kindness-connector-be.onrender.com/admin/stats", { headers }),
-        axios.get("https://exe-kindness-connector-be.onrender.com/admin/users", { headers }),
-        axios.get("https://exe-kindness-connector-be.onrender.com/admin/books", { headers })
+        axios.get(`${API_URL}/admin/stats`, { headers }),
+        axios.get(`${API_URL}/admin/users`, { headers }),
+        axios.get(`${API_URL}/admin/books`, { headers })
       ]);
 
       setStats(statsRes.data);
@@ -59,7 +60,7 @@ export default function AdminDashboard() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/admin/users/${userId}/status`, { status: newStatus }, {
+      await axios.patch(`${API_URL}/admin/users/${userId}/status`, { status: newStatus }, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       fetchAdminData();
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/admin/books/${bookId}/status`, { status: newStatus }, {
+      await axios.patch(`${API_URL}/admin/books/${bookId}/status`, { status: newStatus }, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       fetchAdminData();

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, LogIn } from "lucide-react";
@@ -20,7 +21,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post("https://exe-kindness-connector-be.onrender.com/auth/login", {
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email,
         password,
       });

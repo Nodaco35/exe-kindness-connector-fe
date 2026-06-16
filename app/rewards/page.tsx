@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck } from "lucide-react";
@@ -27,7 +28,7 @@ export default function RewardsPage() {
       }
       const auth = JSON.parse(authStr);
 
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/user/me", {
+      const res = await axios.get(`${API_URL}/user/me`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
 
@@ -48,7 +49,7 @@ export default function RewardsPage() {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
       
-      await axios.post("https://exe-kindness-connector-be.onrender.com/user/membership", {}, {
+      await axios.post(`${API_URL}/user/membership`, {}, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
 

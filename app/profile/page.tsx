@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, MapPin, Camera, Save, LogOut } from "lucide-react";
@@ -34,7 +35,7 @@ export default function ProfilePage() {
       const auth = JSON.parse(authStr);
       setAuthData(auth);
 
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/user/me", {
+      const res = await axios.get(`${API_URL}/user/me`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
 
@@ -80,7 +81,7 @@ export default function ProfilePage() {
         }
       };
 
-      const res = await axios.patch("https://exe-kindness-connector-be.onrender.com/user/me", payload, {
+      const res = await axios.patch(`${API_URL}/user/me`, payload, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
 

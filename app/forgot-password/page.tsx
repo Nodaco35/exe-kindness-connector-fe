@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useState } from "react";
 import { BookOpen, KeyRound } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const response = await axios.post("https://exe-kindness-connector-be.onrender.com/auth/forgot-password", {
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, {
         email,
       });
 

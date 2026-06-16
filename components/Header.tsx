@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ export default function Header() {
   useEffect(() => {
     const fetchUserData = async (token: string, candidateAuth: StoredAuth) => {
       try {
-        const res = await axios.get("https://exe-kindness-connector-be.onrender.com/user/me", {
+        const res = await axios.get(`${API_URL}/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

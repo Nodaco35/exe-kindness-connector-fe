@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/config/api";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Send, User as UserIcon, MessageSquare } from "lucide-react";
@@ -28,7 +29,7 @@ function ChatComponent() {
       setUserId(auth.id);
 
       // Connect Socket
-      socketRef.current = io("https://exe-kindness-connector-be.onrender.com");
+      socketRef.current = io(`${API_URL}`);
 
       socketRef.current.on("connect", () => {
         console.log("Connected to chat server");
@@ -76,7 +77,7 @@ function ChatComponent() {
 
   const fetchRooms = async (auth: any) => {
     try {
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/chat/rooms", {
+      const res = await axios.get(`${API_URL}/chat/rooms`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setRooms(res.data);
@@ -95,7 +96,7 @@ function ChatComponent() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      const res = await axios.get(`https://exe-kindness-connector-be.onrender.com/chat/rooms/${room._id}/messages`, {
+      const res = await axios.get(`${API_URL}/chat/rooms/${room._id}/messages`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setMessages(res.data);
@@ -134,7 +135,7 @@ function ChatComponent() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/exchange/${activeRoom.activeExchange._id}/cancel`, {}, {
+      await axios.patch(`${API_URL}/exchange/${activeRoom.activeExchange._id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       // Socket event will handle UI update
@@ -149,7 +150,7 @@ function ChatComponent() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      await axios.patch(`https://exe-kindness-connector-be.onrender.com/exchange/${activeRoom.activeExchange._id}/complete`, {}, {
+      await axios.patch(`${API_URL}/exchange/${activeRoom.activeExchange._id}/complete`, {}, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       // Socket event will handle UI update
