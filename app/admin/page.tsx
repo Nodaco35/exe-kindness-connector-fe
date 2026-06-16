@@ -3,7 +3,7 @@
 import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, BookOpen, Ban, CheckCircle, ShieldAlert } from "lucide-react";
+import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut } from "lucide-react";
 import axios from "axios";
 import styles from "./page.module.scss";
 
@@ -14,6 +14,8 @@ export default function AdminDashboard() {
   const [books, setBooks] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("USERS");
   const [loading, setLoading] = useState(true);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
+  const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
 
   useEffect(() => {
     fetchAdminData();
@@ -37,15 +39,20 @@ export default function AdminDashboard() {
 
       const headers = { Authorization: `Bearer ${auth.token}` };
       
-      const [statsRes, usersRes, booksRes] = await Promise.all([
+      const [statsRes, usersRes, booksRes, profileRes] = await Promise.all([
         axios.get(`${API_URL}/admin/stats`, { headers }),
         axios.get(`${API_URL}/admin/users`, { headers }),
-        axios.get(`${API_URL}/admin/books`, { headers })
+        axios.get(`${API_URL}/admin/books`, { headers }),
+        axios.get(`${API_URL}/user/me`, { headers })
       ]);
 
       setStats(statsRes.data);
       setUsers(usersRes.data);
       setBooks(booksRes.data);
+      setAdminProfile(profileRes.data);
+      if (!profileForm.fullName && !profileForm.avatar) {
+        setProfileForm({ fullName: profileRes.data.fullName || '', avatar: profileRes.data.avatar || '' });
+      }
     } catch (err: any) {
       if (err.response?.status === 403) {
         alert("Bạn không có quyền truy cập trang này!");
@@ -82,6 +89,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const auth = JSON.parse(authStr!);
+      await axios.patch(`${API_URL}/user/profile`, profileForm, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      alert("Cập nhật thông tin thành công!");
+      fetchAdminData();
+    } catch (err) {
+      alert("Cập nhật thất bại");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("bookshare_auth_v3");
+    router.push("/admin/login");
+  };
+
   if (loading) {
     return <div className={styles.container}><div className={styles.loading}>Đang tải...</div></div>;
   }
@@ -106,12 +133,27 @@ export default function AdminDashboard() {
           >
             <BookOpen size={18} /> Quản lý Sách
           </button>
+          <button 
+            className={`${styles.navItem} ${activeTab === "PROFILE" ? styles.active : ""}`}
+            onClick={() => setActiveTab("PROFILE")}
+          >
+            <User size={18} /> Trang cá nhân
+          </button>
         </nav>
+        <div className={styles.sidebarFooter}>
+          <button className={styles.logoutBtn} onClick={handleLogout}>
+            <LogOut size={18} /> Đăng xuất
+          </button>
+        </div>
       </div>
 
       <div className={styles.mainContent}>
         <div className={styles.header}>
-          <h1>{activeTab === "USERS" ? "Quản lý Người Dùng" : "Quản lý Sách"}</h1>
+          <h1>
+            {activeTab === "USERS" && "Quản lý Người Dùng"}
+            {activeTab === "BOOKS" && "Quản lý Sách"}
+            {activeTab === "PROFILE" && "Trang Cá Nhân"}
+          </h1>
           <div className={styles.stats}>
             <div className={styles.statCard}>
               <span>Tổng Users</span>
@@ -204,6 +246,38 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {activeTab === "PROFILE" && adminProfile && (
+            <div className={styles.profileSection}>
+              <form onSubmit={handleUpdateProfile} className={styles.profileForm}>
+                <div className={styles.profileHeader}>
+                  <img src={profileForm.avatar || "https://ui-avatars.com/api/?name=Admin&background=random"} alt="Avatar" className={styles.avatarLarge} />
+                  <div>
+                    <h2>{adminProfile.email}</h2>
+                    <span className={styles.badge}>{adminProfile.role}</span>
+                  </div>
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>Họ và tên</label>
+                  <input 
+                    type="text" 
+                    value={profileForm.fullName} 
+                    onChange={e => setProfileForm({...profileForm, fullName: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>URL Ảnh đại diện</label>
+                  <input 
+                    type="text" 
+                    value={profileForm.avatar} 
+                    onChange={e => setProfileForm({...profileForm, avatar: e.target.value})}
+                  />
+                </div>
+                <button type="submit" className={styles.saveBtn}>Lưu thay đổi</button>
+              </form>
             </div>
           )}
         </div>
