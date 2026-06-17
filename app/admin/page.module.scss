@@ -204,10 +204,109 @@
 }
 
 .actionBtnUnlock {
-  background-color: var(--success-bg);
-  color: var(--success-text);
+  background-color: var(--success);
+  color: white;
 
   &:hover {
-    background-color: #dcfce7;
+    background-color: var(--success-hover);
+  }
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.profileSection {
+  background-color: var(--bg-color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  padding: 2rem;
+  max-width: 600px;
+}
+
+.profileForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+}
+
+.avatarLarge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+  }
+}
+
+.saveBtn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--primary-hover);
   }
 }

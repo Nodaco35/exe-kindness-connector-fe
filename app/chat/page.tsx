@@ -3,7 +3,7 @@
 import { API_URL } from "@/config/api";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Send, User as UserIcon, MessageSquare } from "lucide-react";
+import { Send, User as UserIcon, MessageSquare, Check, CheckCheck, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
 import { useSocket } from "../../components/SocketProvider";
@@ -21,8 +21,19 @@ function ChatComponent() {
   const [newMessage, setNewMessage] = useState("");
   const [userId, setUserId] = useState("");
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [showMobileList, setShowMobileList] = useState(!roomIdQuery);
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeRoomRef = useRef<any>(null);
+  const userIdRef = useRef<string>("");
+
+  useEffect(() => {
+    activeRoomRef.current = activeRoom;
+  }, [activeRoom]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   useEffect(() => {
     const authStr = localStorage.getItem("bookshare_auth_v3");
@@ -38,12 +49,49 @@ function ChatComponent() {
       if (!socketRef.current) return;
 
       socketRef.current.on("connect", () => {
-        console.log("Connected to chat server");
+        console.log("Connected to chat server! Current active room:", activeRoomRef.current?._id);
+        if (activeRoomRef.current) {
+          console.log("Emitting joinRoom on reconnect for room:", activeRoomRef.current._id);
+          socketRef.current?.emit("joinRoom", { roomId: activeRoomRef.current._id, userId: auth.id });
+        }
       });
 
       socketRef.current.on("newMessage", (message) => {
+        console.log("Received newMessage:", message);
         setMessages((prev) => [...prev, message]);
         scrollToBottom();
+
+        // If we receive a message that is not ours and we are in the room, mark it as seen
+        if (activeRoomRef.current && message.roomId === activeRoomRef.current._id) {
+          const isMine = typeof message.senderId === 'string' 
+            ? message.senderId === auth.id 
+            : message.senderId?._id === auth.id;
+            
+          console.log("Is mine?", isMine);
+          if (!isMine && !message.isSystem) {
+            console.log("Emitting markAsSeen for message:", message._id);
+            socketRef.current?.emit("markAsSeen", { roomId: message.roomId, userId: auth.id });
+          }
+        }
+      });
+
+      socketRef.current.on("messagesSeen", (data) => {
+        console.log("Socket received 'messagesSeen':", data, "Current auth id:", auth.id);
+        if (data.userId !== auth.id) {
+          // The other user has seen our messages
+          console.log("Updating local messages to SEEN");
+          setMessages((prev) => {
+            const newMessages = prev.map(msg => {
+              const isMine = typeof msg.senderId === 'string' ? msg.senderId === auth.id : msg.senderId?._id === auth.id;
+              if (isMine && msg.status !== 'SEEN') {
+                return { ...msg, status: 'SEEN' };
+              }
+              return msg;
+            });
+            console.log("Updated messages array length:", newMessages.length);
+            return newMessages;
+          });
+        }
       });
 
       socketRef.current.on("errorMessage", (err) => {
@@ -94,15 +142,20 @@ function ChatComponent() {
   };
 
   const selectRoom = async (room: any) => {
+    console.log("selectRoom called for room:", room._id);
     setActiveRoom(room);
-    if (socketRef.current) {
-      socketRef.current.emit("joinRoom", { roomId: room._id });
-    }
+    setShowMobileList(false);
     
     // Fetch old messages
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
+
+      if (socketRef.current) {
+        console.log("Emitting joinRoom in selectRoom for room:", room._id);
+        socketRef.current.emit("joinRoom", { roomId: room._id, userId: auth.id });
+      }
+      
       const res = await axios.get(`${API_URL}/chat/rooms/${room._id}/messages`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
@@ -133,7 +186,10 @@ function ChatComponent() {
   };
 
   const getOtherParticipant = (room: any) => {
-    return room.participants.find((p: any) => p._id !== userId) || room.participants[0];
+    if (!room || !room.participants || room.participants.length === 0) {
+      return { fullName: "Người dùng không xác định", avatar: "" };
+    }
+    return room.participants.find((p: any) => p && p._id !== userIdRef.current) || room.participants[0];
   };
 
   const handleCancelExchange = async () => {
@@ -166,11 +222,15 @@ function ChatComponent() {
     }
   };
 
+  const handleBackToList = () => {
+    setShowMobileList(true);
+  };
+
   const isChatLocked = !activeRoom?.activeExchange || activeRoom?.activeExchange?.status === 'CANCELED' || activeRoom?.activeExchange?.status === 'COMPLETED';
 
   return (
     <div className={styles.container}>
-      <div className={styles.chatWrapper}>
+      <div className={`${styles.chatWrapper} ${showMobileList ? styles.showList : ''}`}>
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <h3>Tin nhắn ({rooms.length})</h3>
@@ -206,6 +266,9 @@ function ChatComponent() {
           {activeRoom ? (
             <>
               <div className={styles.chatHeader}>
+                <button className={styles.backBtn} onClick={handleBackToList}>
+                  <ArrowLeft size={24} />
+                </button>
                 <img src={getOtherParticipant(activeRoom).avatar || "https://ui-avatars.com/api/?name=U&background=random"} alt="" className={styles.avatar} />
                 <div className={styles.chatHeaderInfo}>
                   <h3>{getOtherParticipant(activeRoom).fullName}</h3>
@@ -249,6 +312,22 @@ function ChatComponent() {
                       )}
                       <div className={styles.messageBubble}>
                         {msg.content}
+                        {isMine && !msg.isSystem && (
+                          <div className={styles.messageStatus}>
+                            {msg.status === 'SEEN' ? (
+                              <img 
+                                src={getOtherParticipant(activeRoom).avatar || "https://ui-avatars.com/api/?name=U&background=random"} 
+                                alt="seen" 
+                                className={styles.seenAvatar} 
+                                title="Đã xem"
+                              />
+                            ) : msg.status === 'DELIVERED' ? (
+                              <div title="Đã nhận"><CheckCheck size={14} className={styles.deliveredIcon} /></div>
+                            ) : (
+                              <div title="Đã gửi"><Check size={14} className={styles.sentIcon} /></div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

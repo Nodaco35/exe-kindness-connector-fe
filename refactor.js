@@ -1,42 +1,60 @@
 const fs = require('fs');
 const path = require('path');
 
-const files = [
-  'app/admin/page.tsx',
-  'app/books/[id]/page.tsx',
-  'app/chat/page.tsx',
-  'app/forgot-password/page.tsx',
-  'app/login/page.tsx',
-  'app/page.tsx',
-  'app/post/page.tsx',
-  'app/profile/page.tsx',
-  'app/register/page.tsx',
-  'app/requests/page.tsx',
-  'app/rewards/page.tsx',
-  'components/AuthGate.tsx',
-  'components/Header.tsx',
-  'components/RatingModal.tsx'
-];
-
-files.forEach(file => {
-  const filePath = path.join(__dirname, file);
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-  let content = fs.readFileSync(filePath, 'utf8');
-  
-  // Add import if missing
-  if (content.includes('API_URL') && !content.includes('@/config/api')) {
-    const importStr = 'import { API_URL } from "@/config/api";\n';
-    
-    if (content.startsWith('"use client";') || content.startsWith("'use client';")) {
-      content = content.replace(/^(["']use client["'];?[\r\n]+)/, `$1${importStr}`);
+function walkDir(dir, callback) {
+  fs.readdirSync(dir).forEach(f => {
+    let dirPath = path.join(dir, f);
+    let isDirectory = fs.statSync(dirPath).isDirectory();
+    if (isDirectory) {
+      // Skip node_modules, .next, .git
+      if (f !== 'node_modules' && f !== '.next' && f !== '.git') {
+        walkDir(dirPath, callback);
+      }
     } else {
-      content = importStr + content;
+      callback(dirPath);
     }
-    
-    fs.writeFileSync(filePath, content, 'utf8');
-    console.log("Added import to:", file);
-  }
+  });
+}
+
+const targetDirs = ['app', 'components'];
+let modifiedCount = 0;
+
+targetDirs.forEach(dir => {
+  const dirPath = path.join(__dirname, dir);
+  if (!fs.existsSync(dirPath)) return;
+
+  walkDir(dirPath, (filePath) => {
+    const ext = path.extname(filePath);
+    if (ext !== '.ts' && ext !== '.tsx') return;
+
+    let content = fs.readFileSync(filePath, 'utf8');
+    let originalContent = content;
+
+    // 1. Replace http://localhost:3000 references with template literal using API_URL
+    // Case 1: Double quotes "http://localhost:3000..."
+    content = content.replace(/"http:\/\/localhost:3000([^"]*)"/g, '`${API_URL}$1`');
+    // Case 2: Single quotes 'http://localhost:3000...'
+    content = content.replace(/'http:\/\/localhost:3000([^']*)'/g, '`${API_URL}$1`');
+    // Case 3: Backticks `http://localhost:3000...`
+    content = content.replace(/`http:\/\/localhost:3000([^`]*)`/g, '`${API_URL}$1`');
+
+    // 2. Add API_URL import if needed and missing
+    if (content.includes('API_URL') && !content.includes('@/config/api')) {
+      const importStr = 'import { API_URL } from "@/config/api";\n';
+      
+      if (content.startsWith('"use client";') || content.startsWith("'use client';")) {
+        content = content.replace(/^(["']use client["'];?[\r\n]+)/, `$1${importStr}`);
+      } else {
+        content = importStr + content;
+      }
+    }
+
+    if (content !== originalContent) {
+      fs.writeFileSync(filePath, content, 'utf8');
+      console.log(`Refactored API URL in: ${path.relative(__dirname, filePath)}`);
+      modifiedCount++;
+    }
+  });
 });
-console.log("Done");
+
+console.log(`Finished! Refactored ${modifiedCount} files.`);
