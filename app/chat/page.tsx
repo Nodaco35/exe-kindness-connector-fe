@@ -98,6 +98,14 @@ function ChatComponent() {
         alert(err.message);
       });
 
+      socketRef.current.on("newChatRoom", () => {
+        fetchRooms(auth.token);
+      });
+
+      socketRef.current.on("exchangeUpdated", () => {
+        fetchRooms(auth.token);
+      });
+
       socketRef.current.on("exchange_canceled", (data) => {
         alert(data.message);
         setRooms(prev => prev.map(r => r.activeExchange?._id === data.exchangeId ? { ...r, activeExchange: { ...r.activeExchange, status: 'CANCELED' } } : r));

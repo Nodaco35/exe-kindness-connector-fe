@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { io, Socket } from "socket.io-client";
 import { API_URL } from "@/config/api";
+import axios from "axios";
 import { useNotificationStore } from "@/store/useNotificationStore";
 
 interface SocketContextType {
@@ -39,6 +40,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       try {
         const auth = JSON.parse(authStr);
         if (!auth.id) return;
+
+        // Fetch unread notifications from DB
+        axios.get(`${API_URL}/notification/unread`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        }).then(res => {
+          const unread = res.data;
+          useNotificationStore.setState({ notifications: unread.map((n: any) => ({ ...n, id: n._id, isVisible: false })) });
+        }).catch(err => console.error("Failed to fetch notifications", err));
 
         // Tránh kết nối lại nếu đã có kết nối hợp lệ cho cùng userId
         if (socketInstance && socketInstance.connected) return;

@@ -195,10 +195,18 @@ export default function Header() {
 
               <Link
                 href="/requests"
+                onClick={() => {
+                  if (unreadCount > 0 && auth) {
+                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                      .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
+                      .catch(console.error);
+                  }
+                }}
                 className={`${styles.chatIcon} ${pathname.startsWith("/requests") ? styles.chatIconActive : ""}`}
                 title="Quản lý lượt xin"
               >
                 <Bell size={18} />
+                {unreadCount > 0 && <span className={styles.chatBadge} />}
               </Link>
 
               <Link
