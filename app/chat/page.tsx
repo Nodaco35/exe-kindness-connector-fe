@@ -40,7 +40,9 @@ function ChatComponent() {
       setUserId(auth.id);
 
       // Connect Socket
-      socketRef.current = io(`${API_URL}`);
+      socketRef.current = io(`${API_URL}`, {
+        transports: ["websocket"],
+      });
 
       socketRef.current.on("connect", () => {
         console.log("Connected to chat server! Current active room:", activeRoomRef.current?._id);
