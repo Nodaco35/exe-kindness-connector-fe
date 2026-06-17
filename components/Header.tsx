@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { MessageCircle, Plus, LogOut, Crown, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useSocket } from "./SocketProvider";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import styles from "./Header.module.scss";
 
 type StoredAuth = {
@@ -43,6 +45,17 @@ export default function Header() {
   const [points, setPoints] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [auth, setAuth] = useState<StoredAuth | null>(null);
+
+  const socket = useSocket();
+  const notifications = useNotificationStore(state => state.notifications);
+  const unreadCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+
+  const handleTestNotification = () => {
+    const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
+    if (targetUserId && socket) {
+      socket.emit("test_send_notification", { targetUserId });
+    }
+  };
 
   const clearAuthState = useCallback(() => {
     if (typeof window === "undefined") return;

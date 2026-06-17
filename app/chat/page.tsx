@@ -6,10 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { Send, User as UserIcon, MessageSquare } from "lucide-react";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
+import { useSocket } from "../../components/SocketProvider";
 import RatingModal from "../../components/RatingModal";
 import styles from "./page.module.scss";
 
 function ChatComponent() {
+  const globalSocket = useSocket();
   const searchParams = useSearchParams();
   const roomIdQuery = searchParams.get("room");
 
@@ -29,7 +31,11 @@ function ChatComponent() {
       setUserId(auth.id);
 
       // Connect Socket
-      socketRef.current = io(`${API_URL}`);
+      // Xoá kết nối cục bộ tại đây
+      // socketRef.current = io(`${API_URL}`);
+      socketRef.current = globalSocket;
+      
+      if (!socketRef.current) return;
 
       socketRef.current.on("connect", () => {
         console.log("Connected to chat server");
@@ -59,7 +65,8 @@ function ChatComponent() {
       fetchRooms(auth);
 
       return () => {
-        socketRef.current?.disconnect();
+        // Xoá kết nối cục bộ tại đây
+        // socketRef.current?.disconnect();
       };
     }
   }, []);
