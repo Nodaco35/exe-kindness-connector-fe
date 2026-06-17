@@ -24,39 +24,64 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
-    const authStr = localStorage.getItem("bookshare_auth_v3");
-    if (!authStr) return;
+    let socketInstance: Socket | null = null;
 
-    try {
-      const auth = JSON.parse(authStr);
-      if (!auth.id) return;
+    const connectSocket = () => {
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      if (!authStr) {
+        if (socketInstance) {
+          socketInstance.disconnect();
+          setSocket(null);
+        }
+        return;
+      }
 
-      const socketInstance = io(API_URL);
+      try {
+        const auth = JSON.parse(authStr);
+        if (!auth.id) return;
 
-      socketInstance.on("connect", () => {
-        console.log("Global socket connected");
-        // Gửi event để đăng ký userId vào personal room
-        socketInstance.emit("register", { userId: auth.id });
-      });
+        // Tránh kết nối lại nếu đã có kết nối hợp lệ cho cùng userId
+        if (socketInstance && socketInstance.connected) return;
 
-      socketInstance.on("new_notification", (data) => {
-        addNotification({
-          id: data.id || Date.now().toString(),
-          type: data.type || "BOOK_REQUEST",
-          title: data.title || "Thông báo mới",
-          message: data.message || "",
-          createdAt: data.createdAt || Date.now()
+        socketInstance = io(API_URL);
+
+        socketInstance.on("connect", () => {
+          console.log("Global socket connected");
+          socketInstance?.emit("register", { userId: auth.id });
         });
-      });
 
-      setSocket(socketInstance);
+        socketInstance.on("new_notification", (data) => {
+          addNotification({
+            id: data.id || Date.now().toString(),
+            type: data.type || "BOOK_REQUEST",
+            title: data.title || "Thông báo mới",
+            message: data.message || "",
+            createdAt: data.createdAt || Date.now()
+          });
+        });
 
-      return () => {
+        setSocket(socketInstance);
+      } catch (err) {
+        console.error("SocketProvider init error", err);
+      }
+    };
+
+    // Khởi tạo lần đầu
+    connectSocket();
+
+    // Lắng nghe sự kiện đăng nhập/đăng xuất
+    const handleAuthChange = () => {
+      connectSocket();
+    };
+
+    window.addEventListener("auth-updated", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("auth-updated", handleAuthChange);
+      if (socketInstance) {
         socketInstance.disconnect();
-      };
-    } catch (err) {
-      console.error("SocketProvider init error", err);
-    }
+      }
+    };
   }, [addNotification]);
 
   return (
