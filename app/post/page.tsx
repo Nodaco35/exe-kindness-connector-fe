@@ -1,7 +1,7 @@
 "use client";
 
 import { API_URL } from "@/config/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, MapPin, Upload, Search, X, Image as ImageIcon } from "lucide-react";
 import axios from "axios";
@@ -30,6 +30,36 @@ export default function PostBook() {
       city: "Hà Nội"
     }
   });
+
+  useEffect(() => {
+    const fetchUserLocation = async () => {
+      try {
+        const authStr = localStorage.getItem("bookshare_auth_v3");
+        if (!authStr) return;
+        const auth = JSON.parse(authStr);
+        
+        const res = await axios.get(`${API_URL}/user/me`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        
+        const user = res.data;
+        const addr = user.address && user.address.length > 0 ? user.address[0] : null;
+        if (addr?.district) {
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              district: addr.district,
+              city: addr.city || "Hà Nội"
+            }
+          }));
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải vị trí người dùng:", err);
+      }
+    };
+    
+    fetchUserLocation();
+  }, []);
 
   const activeCategoryGroup = bookCategories.find(c => c.slug === formData.category);
 
@@ -290,12 +320,19 @@ export default function PostBook() {
               <CustomSelect
                 value={formData.location.district}
                 onChange={(val) => handleLocationChange({ target: { name: "district", value: val } })}
-                options={[
-                  { value: "Cầu Giấy", label: "Cầu Giấy" },
-                  { value: "Đống Đa", label: "Đống Đa" },
-                  { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
-                  { value: "Hà Đông", label: "Hà Đông" }
-                ]}
+                options={((): { value: string; label: string }[] => {
+                  const baseOptions = [
+                    { value: "Cầu Giấy", label: "Cầu Giấy" },
+                    { value: "Đống Đa", label: "Đống Đa" },
+                    { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
+                    { value: "Hà Đông", label: "Hà Đông" }
+                  ];
+                  const currentDist = formData.location.district;
+                  if (currentDist && !baseOptions.some(opt => opt.value === currentDist)) {
+                    return [...baseOptions, { value: currentDist, label: currentDist }];
+                  }
+                  return baseOptions;
+                })()}
               />
             </div>
           </div>
