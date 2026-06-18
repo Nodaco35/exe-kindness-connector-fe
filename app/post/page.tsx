@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { BookOpen, MapPin, Upload, Search, X, Image as ImageIcon } from "lucide-react";
 import axios from "axios";
 import bookCategories from "../../book_categories.json";
-import styles from "../login/page.module.scss";
+import styles from "./page.module.scss";
+import CustomSelect from "@/components/CustomSelect";
 
 export default function PostBook() {
   const router = useRouter();
@@ -271,68 +272,56 @@ export default function PostBook() {
           <div className={styles.rowGroup}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Tình trạng</label>
-              <select 
-                name="codition" 
-                value={formData.codition} 
-                onChange={handleChange}
-                className={styles.select}
+              <CustomSelect
+                value={formData.codition}
+                onChange={(val) => handleChange({ target: { name: "codition", value: val } })}
+                options={[
+                  { value: "NEW", label: "Mới" },
+                  { value: "LIKE_NEW", label: "Như Mới" },
+                  { value: "USED", label: "Cũ/Đã sử dụng" }
+                ]}
+                placeholder="Vui lòng chọn Tình trạng..."
                 required
-              >
-                <option value="" disabled hidden>Vui lòng chọn Tình trạng...</option>
-                <option value="NEW">Mới</option>
-                <option value="LIKE_NEW">Như Mới</option>
-                <option value="USED">Cũ/Đã sử dụng</option>
-              </select>
+              />
             </div>
             
             <div className={styles.inputGroup}>
               <label className={styles.label}>Khu vực (Quận)</label>
-              <select 
-                name="district" 
-                value={formData.location.district} 
-                onChange={handleLocationChange}
-                className={styles.select}
-              >
-                <option value="Cầu Giấy">Cầu Giấy</option>
-                <option value="Đống Đa">Đống Đa</option>
-                <option value="Hai Bà Trưng">Hai Bà Trưng</option>
-                <option value="Hà Đông">Hà Đông</option>
-              </select>
+              <CustomSelect
+                value={formData.location.district}
+                onChange={(val) => handleLocationChange({ target: { name: "district", value: val } })}
+                options={[
+                  { value: "Cầu Giấy", label: "Cầu Giấy" },
+                  { value: "Đống Đa", label: "Đống Đa" },
+                  { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
+                  { value: "Hà Đông", label: "Hà Đông" }
+                ]}
+              />
             </div>
           </div>
 
           <div className={styles.rowGroup}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Thể loại chính</label>
-              <select 
-                name="category" 
-                value={formData.category} 
-                onChange={handleChange}
-                className={styles.select}
+              <CustomSelect
+                value={formData.category}
+                onChange={(val) => handleChange({ target: { name: "category", value: val } })}
+                options={bookCategories.map(cat => ({ value: cat.slug, label: cat.name }))}
+                placeholder="Vui lòng chọn Thể loại chính..."
                 required
-              >
-                <option value="" disabled hidden>Vui lòng chọn Thể loại chính...</option>
-                {bookCategories.map(cat => (
-                  <option key={cat.slug} value={cat.slug}>{cat.name}</option>
-                ))}
-              </select>
+              />
             </div>
             
             <div className={styles.inputGroup}>
               <label className={styles.label}>Thể loại phụ</label>
-              <select 
-                name="advancedCategory" 
-                value={formData.advancedCategory} 
-                onChange={handleChange}
-                className={styles.select}
+              <CustomSelect
+                value={formData.advancedCategory}
+                onChange={(val) => handleChange({ target: { name: "advancedCategory", value: val } })}
+                options={activeCategoryGroup?.subcategories.map(sub => ({ value: sub.slug, label: sub.name })) || []}
+                placeholder="Vui lòng chọn Thể loại phụ..."
                 disabled={!activeCategoryGroup || activeCategoryGroup.subcategories.length === 0}
                 required
-              >
-                <option value="" disabled hidden>Vui lòng chọn Thể loại phụ...</option>
-                {activeCategoryGroup?.subcategories.map(sub => (
-                  <option key={sub.slug} value={sub.slug}>{sub.name}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
