@@ -337,31 +337,6 @@ export default function RewardsPage() {
                   <span>Hệ thống đang tự động kiểm tra giao dịch của bạn...</span>
                 </div>
 
-                {/* Giả lập nút thanh toán cho môi trường thử nghiệm sandbox */}
-                <div className={styles.testSection} style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border-subtle)' }}>
-                  <p className={styles.testHelpText} style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                    Bạn đang ở môi trường Test. Hãy nhấn nút dưới đây để giả lập chuyển khoản thành công:
-                  </p>
-                  <button
-                    type="button"
-                    className={styles.simulateBtn}
-                    onClick={handleSimulatePayment}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'var(--bg-color-surface)',
-                      border: '1px solid var(--border-subtle)',
-                      color: 'var(--text-main)',
-                      borderRadius: 'var(--radius-md)',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Giả lập chuyển khoản thành công (Test Sandbox)
-                  </button>
-                </div>
               </div>
             </div>
           </div>
