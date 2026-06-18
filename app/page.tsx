@@ -1,13 +1,10 @@
 "use client";
 
 import { API_URL } from "@/config/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   BookOpen,
-  ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Filter,
   MapPin,
   Search,
@@ -16,7 +13,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import bookCategories from "../book_categories.json";
 import BookCard, { Book } from "../components/BookCard";
-import HeroCarousel from "../components/HeroCarousel";
 import styles from "./page.module.scss";
 
 type SubCategory = {
@@ -43,6 +39,39 @@ type BookWithCategories = Book & {
   categories?: CategoryRef[];
   advancedCategories?: CategoryRef[];
 };
+
+const HANOI_DISTRICTS = [
+  "Quận Ba Đình",
+  "Quận Hoàn Kiếm",
+  "Quận Tây Hồ",
+  "Quận Long Biên",
+  "Quận Cầu Giấy",
+  "Quận Đống Đa",
+  "Quận Hai Bà Trưng",
+  "Quận Hoàng Mai",
+  "Quận Thanh Xuân",
+  "Quận Nam Từ Liêm",
+  "Quận Bắc Từ Liêm",
+  "Quận Hà Đông",
+  "Thị xã Sơn Tây",
+  "Huyện Sóc Sơn",
+  "Huyện Đông Anh",
+  "Huyện Gia Lâm",
+  "Huyện Thanh Trì",
+  "Huyện Mê Linh",
+  "Huyện Ba Vì",
+  "Huyện Phúc Thọ",
+  "Huyện Đan Phượng",
+  "Huyện Hoài Đức",
+  "Huyện Quốc Oai",
+  "Huyện Thạch Thất",
+  "Huyện Chương Mỹ",
+  "Huyện Thanh Oai",
+  "Huyện Thường Tín",
+  "Huyện Phú Xuyên",
+  "Huyện Ứng Hòa",
+  "Huyện Mỹ Đức",
+];
 
 const categoryGroups = bookCategories as CategoryGroup[];
 
@@ -97,16 +126,13 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState("Đang tải vị trí...");
+  const [userDistrict, setUserDistrict] = useState("");
 
   const [activeRadius, setActiveRadius] = useState("10km");
   const [selectedTopCategory, setSelectedTopCategory] = useState<string>("all");
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
   const [selectedCondition, setSelectedCondition] = useState("all");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
 
   const fetchUserLocation = async () => {
     try {
@@ -124,6 +150,7 @@ export default function Home() {
       const addr = res.data.address;
       if (addr && addr.length > 0) {
         setUserLocation(`${addr[0].district}, ${addr[0].city}`);
+        setUserDistrict(addr[0].district);
       } else {
         setUserLocation("Toàn quốc");
       }
@@ -133,10 +160,18 @@ export default function Home() {
     }
   };
 
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/book`);
+      const params = new URLSearchParams();
+      if (userDistrict) {
+        params.append('district', userDistrict);
+      }
+      if (activeRadius) {
+        params.append('radius', activeRadius.replace('km', ''));
+      }
+      
+      const response = await axios.get(`${API_URL}/book?${params.toString()}`);
       if (response.data) {
         setBooks(response.data);
       }
@@ -145,16 +180,20 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userDistrict, activeRadius]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchUserLocation();
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void fetchBooks();
-      void fetchUserLocation();
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [fetchBooks]);
 
   const activeTopCategory = useMemo(
     () => categoryGroups.find((category) => category.slug === selectedTopCategory) ?? null,
@@ -181,47 +220,20 @@ export default function Home() {
         if (selectedCondition === "old" && cond !== "OLD") matchesCondition = false;
       }
 
+      // The radius is now handled by the backend geospatial query, so we don't need local filtering for it
       const matchesRadius = true;
 
       return matchesSearch && matchesCategory && matchesCondition && matchesRadius;
     });
   }, [books, searchTerm, selectedTopCategory, selectedSubCategory, selectedCondition, activeTopCategory]);
 
-  // Reset page khi filter thay đổi
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedTopCategory, selectedSubCategory, selectedCondition, activeRadius]);
-
-  // Pagination computed
-  const totalPages = Math.max(1, Math.ceil(filteredBooks.length / ITEMS_PER_PAGE));
-  const paginatedBooks = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredBooks.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredBooks, currentPage, ITEMS_PER_PAGE]);
-
-  const getPageNumbers = () => {
-    const pages: (number | "...")[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("...");
-      pages.push(totalPages);
-    }
-    return pages;
-  };
-
   const clearFilters = () => {
-    setActiveRadius("10km");
+    setUserDistrict("");
+    setActiveRadius("");
     setSelectedTopCategory("all");
     setSelectedSubCategory("all");
     setSelectedCondition("all");
     setSearchTerm("");
-    setCurrentPage(1);
   };
 
   const handleTopCategorySelect = (slug: string) => {
@@ -231,7 +243,58 @@ export default function Home() {
 
   return (
     <div className={styles.pageContainer}>
-      <HeroCarousel />
+      <section className={styles.heroSection}>
+        <div className={styles.heroContainer}>
+          <div className={styles.heroContent}>
+            <div className={styles.heroText}>
+              <h1 className={styles.heroTitle}>
+                Trao đổi sách,
+                <br />
+                <span>Chia sẻ tri thức</span>
+              </h1>
+              <p className={styles.heroDesc}>
+                Tham gia cộng đồng những người đọc sách trên toàn quốc. Biến những cuốn sách
+                bạn đã đọc xong thành những chuyến phiêu lưu mới mà không tốn một xu.
+              </p>
+
+              <div className={styles.searchBox}>
+                <div className={styles.searchInputWrapper}>
+                  <Search size={20} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm kiếm theo tên sách, tác giả hoặc thể loại..."
+                    className={styles.searchInput}
+                  />
+                </div>
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm("")} className={styles.clearButton}>
+                    Xóa lọc
+                  </button>
+                )}
+              </div>
+
+              <div className={styles.heroActions}>
+                <button className={styles.btnPrimary}>Bắt đầu trao đổi sách</button>
+                <button className={styles.btnOutline}>Cách hoạt động</button>
+              </div>
+            </div>
+
+            <div className={styles.heroImagePlaceholder}>
+              <div className={styles.placeholderBox}>
+                <div className={styles.placeholderBadge}>
+                  <div className={styles.placeholderIcon}>📚</div>
+                  <div className={styles.badgeText}>
+                    <span>Lượt trao đổi</span>
+                    <strong>12,450+</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className={styles.categoriesSection}>
         <div className={styles.categoriesHeader}>
@@ -331,12 +394,28 @@ export default function Home() {
               </div>
 
               <div className={styles.filterGroup}>
+                <h4>Khu vực (Hà Nội)</h4>
+                <select
+                  value={userDistrict}
+                  onChange={(e) => setUserDistrict(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="">Toàn quốc (Tất cả)</option>
+                  {HANOI_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
                 <h4>Bán kính xung quanh</h4>
                 <div className={styles.filterGrid2}>
                   {["1km", "3km", "5km", "10km"].map((radius) => (
                     <button
                       key={radius}
-                      onClick={() => setActiveRadius(radius)}
+                      onClick={() => setActiveRadius(prev => prev === radius ? "" : radius)}
                       className={`${styles.filterBtn} ${activeRadius === radius ? styles.filterBtnActive : ""}`}
                     >
                       {radius}
@@ -356,7 +435,7 @@ export default function Home() {
                   ].map((condition) => (
                     <button
                       key={condition.id}
-                      onClick={() => setSelectedCondition(condition.id)}
+                      onClick={() => setSelectedCondition(prev => prev === condition.id ? "all" : condition.id)}
                       className={`${styles.filterBtnRow} ${selectedCondition === condition.id ? styles.filterBtnActive : ""
                         }`}
                     >
@@ -380,9 +459,6 @@ export default function Home() {
             <div className={styles.sectionHeader}>
               <p className={styles.resultsCount}>
                 Tìm thấy <span>{filteredBooks.length}</span> cuốn sách
-                {filteredBooks.length > ITEMS_PER_PAGE && (
-                  <> · Trang {currentPage}/{totalPages}</>
-                )}
               </p>
 
               <button onClick={() => setMobileFilterOpen(true)} className={styles.mobileFilterBtn}>
@@ -390,7 +466,7 @@ export default function Home() {
               </button>
             </div>
 
-            {loading ? (
+            {loading && books.length === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIconWrapper}>
                   <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -398,66 +474,11 @@ export default function Home() {
                 <h3>Đang tải sách...</h3>
               </div>
             ) : filteredBooks.length > 0 ? (
-              <>
-                <div className={styles.booksGrid}>
-                  {paginatedBooks.map((book) => (
-                    <BookCard key={book._id} book={book} />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className={styles.pagination}>
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className={styles.pageBtn}
-                      title="Trang đầu"
-                    >
-                      <ChevronsLeft size={16} />
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className={styles.pageBtn}
-                      title="Trang trước"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-
-                    {getPageNumbers().map((page, idx) =>
-                      page === "..." ? (
-                        <span key={`dots-${idx}`} className={styles.pageDots}>…</span>
-                      ) : (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page as number)}
-                          className={`${styles.pageBtn} ${currentPage === page ? styles.pageBtnActive : ""}`}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
-
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className={styles.pageBtn}
-                      title="Trang sau"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className={styles.pageBtn}
-                      title="Trang cuối"
-                    >
-                      <ChevronsRight size={16} />
-                    </button>
-                  </div>
-                )}
-              </>
+              <div className={styles.booksGrid} style={{ opacity: loading ? 0.5 : 1, transition: "opacity 0.2s" }}>
+                {filteredBooks.map((book) => (
+                  <BookCard key={book._id} book={book} />
+                ))}
+              </div>
             ) : (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIconWrapper}>
@@ -555,12 +576,28 @@ export default function Home() {
               )}
 
               <div className={styles.filterGroup}>
+                <h4>Khu vực (Hà Nội)</h4>
+                <select
+                  value={userDistrict}
+                  onChange={(e) => setUserDistrict(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="">Toàn quốc (Tất cả)</option>
+                  {HANOI_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
                 <h4>Bán kính xung quanh</h4>
                 <div className={styles.filterGrid4}>
                   {["1km", "3km", "5km", "10km"].map((radius) => (
                     <button
                       key={radius}
-                      onClick={() => setActiveRadius(radius)}
+                      onClick={() => setActiveRadius(prev => prev === radius ? "" : radius)}
                       className={`${styles.filterBtn} ${activeRadius === radius ? styles.filterBtnActive : ""}`}
                     >
                       {radius}
@@ -580,7 +617,7 @@ export default function Home() {
                   ].map((condition) => (
                     <button
                       key={condition.id}
-                      onClick={() => setSelectedCondition(condition.id)}
+                      onClick={() => setSelectedCondition(prev => prev === condition.id ? "all" : condition.id)}
                       className={`${styles.filterBtn} ${selectedCondition === condition.id ? styles.filterBtnActive : ""
                         }`}
                     >

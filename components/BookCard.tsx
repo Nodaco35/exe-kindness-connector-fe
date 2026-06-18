@@ -53,24 +53,12 @@ const readStoredAuth = (): StoredAuth | null => {
   }
 };
 
-import bookCategoriesData from "../book_categories.json";
+const getCategoryLabel = (value?: Book["categories"], fallback = "Sách chung") => {
+  if (!Array.isArray(value) || value.length === 0) return fallback;
 
-const findCategoryNameBySlug = (slug: string): string => {
-  for (const cat of bookCategoriesData) {
-    if (cat.slug === slug) return cat.name;
-    if (cat.subcategories) {
-      for (const sub of cat.subcategories) {
-        if (sub.slug === slug) return sub.name;
-      }
-    }
-  }
-  return slug;
-};
-
-const getSlug = (value?: any[]): string | null => {
-  if (!Array.isArray(value) || value.length === 0) return null;
   const first = value[0];
-  return typeof first === "string" ? first : (first?.slug || first?.name || null);
+  if (typeof first === "string") return first || fallback;
+  return first?.name || first?.slug || fallback;
 };
 
 export default function BookCard({ book }: { book: Book }) {
@@ -87,11 +75,10 @@ export default function BookCard({ book }: { book: Book }) {
     displayStatus = "Đã có người xin";
   }
 
-  const advancedSlug = getSlug(book.advancedCategories);
-  const topSlug = getSlug(book.categories);
-  const rawSlug = advancedSlug || topSlug || book.category;
-  
-  const categoryText = rawSlug ? findCategoryNameBySlug(rawSlug) : "Sách chung";
+  const categoryText =
+    book.category ||
+    getCategoryLabel(book.categories) ||
+    getCategoryLabel(book.advancedCategories);
 
   const cover = book.images && book.images.length > 0 ? book.images[0] : "https://via.placeholder.com/150";
 

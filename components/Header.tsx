@@ -43,6 +43,44 @@ export default function Header() {
   const [points, setPoints] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [auth, setAuth] = useState<StoredAuth | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    const storedAuth = parseStoredAuth();
+    if (!storedAuth) {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/chat/unread-count", {
+        headers: { Authorization: `Bearer ${storedAuth.token}` },
+      });
+      setUnreadCount(res.data.count || 0);
+    } catch (error) {
+      console.error("Failed to fetch unread count", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (auth?.isLoggedIn) {
+      void fetchUnreadCount();
+
+      // Poll every 15 seconds
+      const interval = setInterval(() => {
+        void fetchUnreadCount();
+      }, 15000);
+
+      // Listen for custom event
+      window.addEventListener("unread-count-updated", fetchUnreadCount);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener("unread-count-updated", fetchUnreadCount);
+      };
+    } else {
+      setUnreadCount(0);
+    }
+  }, [auth, fetchUnreadCount]);
 
   const clearAuthState = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -194,7 +232,9 @@ export default function Header() {
                 title="Tin nhắn"
               >
                 <MessageCircle size={18} />
-                <span className={styles.chatBadge} />
+                {unreadCount > 0 && (
+                  <span className={styles.chatBadge}>{unreadCount}</span>
+                )}
               </Link>
 
               <Link href="/post" className={styles.postButton}>
