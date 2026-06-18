@@ -7,34 +7,25 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   box-shadow: var(--shadow-level-1);
 
   &:hover {
     box-shadow: var(--shadow-level-2);
-    border-color: var(--border-color);
+    transform: translateY(-4px);
   }
 }
 
 .imageContainer {
   display: block;
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   width: 100%;
   overflow: hidden;
-  background-color: var(--bg-color-surface);
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.08) 100%);
-    pointer-events: none;
-    z-index: 1;
-  }
+  background-color: var(--bg-color-alt);
 
   &:hover .image {
-    transform: scale(1.06);
+    transform: scale(1.05);
   }
 }
 
@@ -42,11 +33,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s ease;
 }
 
 .content {
-  padding: 0.75rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -56,31 +47,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .categoryBadge {
   background-color: var(--primary-light-bg);
   color: var(--secondary);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  padding: 0.25rem 0.625rem;
-  border-radius: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
   letter-spacing: 0.02em;
-  border: 1px solid var(--primary-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60%;
 }
 
 .statusBadge {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .statusAvailable {
@@ -98,16 +81,15 @@
 }
 
 .title {
-  font-weight: 800;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1.25rem;
   color: var(--text-main);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.35;
+  line-height: 1.4;
   transition: color 0.2s;
-  letter-spacing: -0.01em;
 
   &:hover {
     color: var(--primary);
@@ -115,15 +97,14 @@
 }
 
 .author {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 400;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 0.75rem;
-  margin-top: 0.125rem;
+  margin-bottom: 1.5rem;
 }
 
 .ownerInfo {
@@ -131,20 +112,16 @@
   align-items: center;
   gap: 0.5rem;
   margin-top: auto;
-  margin-bottom: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
 }
 
 .avatar {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 9999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
   position: relative;
   overflow: hidden;
-  background-color: var(--bg-color-surface);
-  flex-shrink: 0;
-  border: 1px solid var(--border-color);
+  background-color: var(--border-color);
 }
 
 .avatarImg {
@@ -154,8 +131,8 @@
 }
 
 .ownerName {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text-muted);
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -172,17 +149,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.5rem;
-  border-radius: 0;
-  font-size: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
   font-weight: 700;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s;
   text-decoration: none;
   cursor: pointer;
-  letter-spacing: 0.01em;
-
+  
   &:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 }
 
@@ -194,7 +170,7 @@
   &:hover {
     background-color: var(--primary-hover);
     border-color: var(--primary-hover);
-    box-shadow: 0 4px 16px rgba(0, 168, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 168, 255, 0.2);
   }
 }
 
@@ -207,3 +183,4 @@
     background-color: var(--primary-light-bg);
   }
 }
+

@@ -235,6 +235,19 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
+.messageContentArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.seenText {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  text-align: right;
+  align-self: flex-end;
+}
+
 .inputArea {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-subtle);

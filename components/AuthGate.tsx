@@ -10,7 +10,7 @@ type StoredAuth = {
   token: string;
 };
 
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/admin/login", "/admin/register"];
 
 const readStoredAuth = (): StoredAuth | null => {
   if (typeof window === "undefined") return null;

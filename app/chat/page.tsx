@@ -73,6 +73,7 @@ function ChatComponent() {
             socketRef.current?.emit("markAsSeen", { roomId: message.roomId, userId: auth.id });
           }
         }
+        window.dispatchEvent(new Event("unread-count-updated"));
       });
 
       socketRef.current.on("messagesSeen", (data) => {
@@ -92,6 +93,7 @@ function ChatComponent() {
             return newMessages;
           });
         }
+        window.dispatchEvent(new Event("unread-count-updated"));
       });
 
       socketRef.current.on("errorMessage", (err) => {
@@ -140,10 +142,11 @@ function ChatComponent() {
 
   const fetchRooms = async (auth: any) => {
     try {
-      const res = await axios.get(`${API_URL}/chat/rooms`, {
+      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/chat/rooms", {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setRooms(res.data);
+      window.dispatchEvent(new Event("unread-count-updated"));
     } catch (err) {
       console.error(err);
     }
@@ -164,11 +167,12 @@ function ChatComponent() {
         socketRef.current.emit("joinRoom", { roomId: room._id, userId: auth.id });
       }
       
-      const res = await axios.get(`${API_URL}/chat/rooms/${room._id}/messages`, {
+      const res = await axios.get(`https://exe-kindness-connector-be.onrender.com/chat/rooms/${room._id}/messages`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setMessages(res.data);
       scrollToBottom();
+      window.dispatchEvent(new Event("unread-count-updated"));
     } catch (err) {
       console.error(err);
     }
@@ -290,7 +294,11 @@ function ChatComponent() {
                 <div className={styles.chatActions}>
                   {activeRoom.activeExchange?.status === 'ACCEPTED' && (
                     <>
-                      <button className={styles.completeBtn} onClick={handleCompleteExchange}>Hoàn tất giao dịch</button>
+                      {(typeof activeRoom.activeExchange.owner === 'string'
+                        ? activeRoom.activeExchange.owner === userId
+                        : activeRoom.activeExchange.owner?._id === userId) && (
+                        <button className={styles.completeBtn} onClick={handleCompleteExchange}>Hoàn tất giao dịch</button>
+                      )}
                       <button className={styles.cancelBtn} onClick={handleCancelExchange}>Hủy giao dịch</button>
                     </>
                   )}
@@ -301,45 +309,57 @@ function ChatComponent() {
               </div>
 
               <div className={styles.messagesContainer}>
-                {messages.map((msg, idx) => {
-                  if (msg.isSystem) {
-                    return (
-                      <div key={msg._id || idx} className={styles.systemMessage}>
-                        <span>{msg.content}</span>
-                      </div>
-                    );
+                {(() => {
+                  let lastSeenMessageId = null;
+                  for (let i = messages.length - 1; i >= 0; i--) {
+                    const msg = messages[i];
+                    const isMine = typeof msg.senderId === 'string' ? msg.senderId === userId : msg.senderId?._id === userId;
+                    if (isMine && !msg.isSystem && msg.status === 'SEEN') {
+                      lastSeenMessageId = msg._id || i;
+                      break;
+                    }
                   }
 
-                  const isMine = typeof msg.senderId === 'string' ? msg.senderId === userId : msg.senderId?._id === userId;
-                  return (
-                    <div key={msg._id || idx} className={`${styles.messageWrapper} ${isMine ? styles.mine : styles.theirs}`}>
-                      {!isMine && (
-                        <div className={styles.msgAvatar}>
-                           <UserIcon size={14} />
+                  return messages.map((msg, idx) => {
+                    if (msg.isSystem) {
+                      return (
+                        <div key={msg._id || idx} className={styles.systemMessage}>
+                          <span>{msg.content}</span>
                         </div>
-                      )}
-                      <div className={styles.messageBubble}>
-                        {msg.content}
-                        {isMine && !msg.isSystem && (
-                          <div className={styles.messageStatus}>
-                            {msg.status === 'SEEN' ? (
-                              <img 
-                                src={getOtherParticipant(activeRoom).avatar || "https://ui-avatars.com/api/?name=U&background=random"} 
-                                alt="seen" 
-                                className={styles.seenAvatar} 
-                                title="Đã xem"
-                              />
-                            ) : msg.status === 'DELIVERED' ? (
-                              <div title="Đã nhận"><CheckCheck size={14} className={styles.deliveredIcon} /></div>
-                            ) : (
-                              <div title="Đã gửi"><Check size={14} className={styles.sentIcon} /></div>
-                            )}
+                      );
+                    }
+
+                    const isMine = typeof msg.senderId === 'string' ? msg.senderId === userId : msg.senderId?._id === userId;
+                    const isLastSeen = (msg._id && msg._id === lastSeenMessageId) || (!msg._id && idx === lastSeenMessageId);
+
+                    return (
+                      <div key={msg._id || idx} className={`${styles.messageWrapper} ${isMine ? styles.mine : styles.theirs}`}>
+                        {!isMine && (
+                          <div className={styles.msgAvatar}>
+                             <UserIcon size={14} />
                           </div>
                         )}
+                        <div className={styles.messageContentArea}>
+                          <div className={styles.messageBubble}>
+                            {msg.content}
+                            {isMine && !msg.isSystem && msg.status !== 'SEEN' && (
+                              <div className={styles.messageStatus}>
+                                {msg.status === 'DELIVERED' ? (
+                                  <div title="Đã nhận"><CheckCheck size={14} className={styles.deliveredIcon} /></div>
+                                ) : (
+                                  <div title="Đã gửi"><Check size={14} className={styles.sentIcon} /></div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {isMine && !msg.isSystem && msg.status === 'SEEN' && isLastSeen && (
+                            <span className={styles.seenText}>Đã xem</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
                 <div ref={messagesEndRef} />
               </div>
 
