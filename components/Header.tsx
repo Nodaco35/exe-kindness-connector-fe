@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { MessageCircle, Plus, LogOut, Crown, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useSocket } from "./SocketProvider";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import styles from "./Header.module.scss";
 
 type StoredAuth = {
@@ -81,6 +83,17 @@ export default function Header() {
       setUnreadCount(0);
     }
   }, [auth, fetchUnreadCount]);
+
+  const socket = useSocket();
+  const notifications = useNotificationStore(state => state.notifications);
+  const unreadCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+
+  const handleTestNotification = () => {
+    const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
+    if (targetUserId && socket) {
+      socket.emit("test_send_notification", { targetUserId });
+    }
+  };
 
   const clearAuthState = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -220,10 +233,18 @@ export default function Header() {
 
               <Link
                 href="/requests"
+                onClick={() => {
+                  if (unreadCount > 0 && auth) {
+                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                      .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
+                      .catch(console.error);
+                  }
+                }}
                 className={`${styles.chatIcon} ${pathname.startsWith("/requests") ? styles.chatIconActive : ""}`}
                 title="Quản lý lượt xin"
               >
                 <Bell size={18} />
+                {unreadCount > 0 && <span className={styles.chatBadge} />}
               </Link>
 
               <Link

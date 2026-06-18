@@ -1,11 +1,13 @@
 "use client";
 
 import { API_URL } from "@/config/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, MapPin, Upload } from "lucide-react";
 import axios from "axios";
-import styles from "../login/page.module.scss";
+import bookCategories from "../../book_categories.json";
+import styles from "./page.module.scss";
+import CustomSelect from "@/components/CustomSelect";
 
 export default function PostBook() {
   const router = useRouter();
@@ -23,6 +25,38 @@ export default function PostBook() {
       city: "Hà Nội"
     }
   });
+
+  useEffect(() => {
+    const fetchUserLocation = async () => {
+      try {
+        const authStr = localStorage.getItem("bookshare_auth_v3");
+        if (!authStr) return;
+        const auth = JSON.parse(authStr);
+        
+        const res = await axios.get(`${API_URL}/user/me`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        
+        const user = res.data;
+        const addr = user.address && user.address.length > 0 ? user.address[0] : null;
+        if (addr?.district) {
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              district: addr.district,
+              city: addr.city || "Hà Nội"
+            }
+          }));
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải vị trí người dùng:", err);
+      }
+    };
+    
+    fetchUserLocation();
+  }, []);
+
+  const activeCategoryGroup = bookCategories.find(c => c.slug === formData.category);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -121,31 +155,63 @@ export default function PostBook() {
           <div className={styles.rowGroup}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Tình trạng</label>
-              <select 
-                name="codition" 
-                value={formData.codition} 
-                onChange={handleChange}
-                className={styles.select}
-              >
-                <option value="NEW">Mới</option>
-                <option value="LIKE_NEW">Như Mới</option>
-                <option value="USED">Cũ/Đã sử dụng</option>
-              </select>
+              <CustomSelect
+                value={formData.codition}
+                onChange={(val) => handleChange({ target: { name: "codition", value: val } })}
+                options={[
+                  { value: "NEW", label: "Mới" },
+                  { value: "LIKE_NEW", label: "Như Mới" },
+                  { value: "USED", label: "Cũ/Đã sử dụng" }
+                ]}
+                placeholder="Vui lòng chọn Tình trạng..."
+                required
+              />
             </div>
             
             <div className={styles.inputGroup}>
               <label className={styles.label}>Khu vực (Quận)</label>
-              <select 
-                name="district" 
-                value={formData.location.district} 
-                onChange={handleLocationChange}
-                className={styles.select}
-              >
-                <option value="Cầu Giấy">Cầu Giấy</option>
-                <option value="Đống Đa">Đống Đa</option>
-                <option value="Hai Bà Trưng">Hai Bà Trưng</option>
-                <option value="Hà Đông">Hà Đông</option>
-              </select>
+              <CustomSelect
+                value={formData.location.district}
+                onChange={(val) => handleLocationChange({ target: { name: "district", value: val } })}
+                options={((): { value: string; label: string }[] => {
+                  const baseOptions = [
+                    { value: "Cầu Giấy", label: "Cầu Giấy" },
+                    { value: "Đống Đa", label: "Đống Đa" },
+                    { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
+                    { value: "Hà Đông", label: "Hà Đông" }
+                  ];
+                  const currentDist = formData.location.district;
+                  if (currentDist && !baseOptions.some(opt => opt.value === currentDist)) {
+                    return [...baseOptions, { value: currentDist, label: currentDist }];
+                  }
+                  return baseOptions;
+                })()}
+              />
+            </div>
+          </div>
+
+          <div className={styles.rowGroup}>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Thể loại chính</label>
+              <CustomSelect
+                value={formData.category}
+                onChange={(val) => handleChange({ target: { name: "category", value: val } })}
+                options={bookCategories.map(cat => ({ value: cat.slug, label: cat.name }))}
+                placeholder="Vui lòng chọn Thể loại chính..."
+                required
+              />
+            </div>
+            
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Thể loại phụ</label>
+              <CustomSelect
+                value={formData.advancedCategory}
+                onChange={(val) => handleChange({ target: { name: "advancedCategory", value: val } })}
+                options={activeCategoryGroup?.subcategories.map(sub => ({ value: sub.slug, label: sub.name })) || []}
+                placeholder="Vui lòng chọn Thể loại phụ..."
+                disabled={!activeCategoryGroup || activeCategoryGroup.subcategories.length === 0}
+                required
+              />
             </div>
           </div>
 

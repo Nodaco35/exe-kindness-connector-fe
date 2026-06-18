@@ -70,13 +70,13 @@ export default function HeroCarousel() {
 
   return (
     <div className={styles.heroWrapper}>
-      <AnimatePresence mode="wait">
+      <AnimatePresence initial={false}>
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "-100%" }}
+          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           className={styles.slideBackground}
           style={{ backgroundImage: `url(${slides[currentIndex].img})` }}
         >

@@ -1,10 +1,10 @@
 "use client";
 
-import { API_URL } from "@/config/api";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck, X, Copy, Check } from "lucide-react";
 import axios from "axios";
+import { API_URL } from "@/config/api";
 import styles from "./page.module.scss";
 
 export default function RewardsPage() {
@@ -14,7 +14,7 @@ export default function RewardsPage() {
   const [paying, setPaying] = useState(false);
   const [points, setPoints] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
-  const membershipPrice = 5000;
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [showModal, setShowModal] = useState(false);
   const [qrData, setQrData] = useState<{
@@ -22,9 +22,8 @@ export default function RewardsPage() {
     bankAccount: string;
     bankName: string;
     amount: number;
-    orderInvoiceNumber: string;
+    description: string;
   } | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -65,12 +64,26 @@ export default function RewardsPage() {
 
       setPoints(res.data.points || 0);
       setIsPremium(res.data.isPremium || false);
+
+      // Fetch QR info as well
+      await fetchQrInfo(auth.token);
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         router.push("/login");
       }
     } finally {
       if (!isSilent) setLoading(false);
+    }
+  };
+
+  const fetchQrInfo = async (token: string) => {
+    try {
+      const res = await axios.get(`${API_URL}/membership/qr-info`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setQrData(res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải thông tin QR SePay:", err);
     }
   };
 
@@ -95,31 +108,11 @@ export default function RewardsPage() {
   };
 
   const handleBuyMembershipByMoney = async () => {
-    try {
-      setPaying(true);
-      const authStr = localStorage.getItem("bookshare_auth_v3");
-      const auth = JSON.parse(authStr!);
-
-      const response = await axios.post(
-        `${API_URL}/membership/checkout`,
-        {
-          successUrl: `${window.location.origin}/rewards?payment=success`,
-          errorUrl: `${window.location.origin}/rewards?payment=error`,
-          cancelUrl: `${window.location.origin}/rewards?payment=cancel`,
-        },
-        {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        }
-      );
-
-      const { qrUrl, bankAccount, bankName, amount, orderInvoiceNumber } = response.data;
-      setQrData({ qrUrl, bankAccount, bankName, amount, orderInvoiceNumber });
-      setShowModal(true);
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Lỗi khi tạo thanh toán SePay!");
-    } finally {
-      setPaying(false);
+    if (!qrData || typeof qrData !== "object" || !qrData.qrUrl || !qrData.bankAccount) {
+      alert("Không thể kết nối với cổng thanh toán SePay trên Render. Hãy đảm bảo bạn đã đẩy code backend mới lên nhánh chính và Render đã hoàn tất tiến trình Deploy nhé!");
+      return;
     }
+    setShowModal(true);
   };
 
   const handleSimulatePayment = async () => {
@@ -131,16 +124,17 @@ export default function RewardsPage() {
         transactionDate: new Date().toISOString().replace("T", " ").substring(0, 19),
         accountNumber: qrData.bankAccount,
         code: null,
-        content: qrData.orderInvoiceNumber,
+        content: qrData.description,
         transferType: "in",
         transferAmount: qrData.amount,
         accumulated: 10000000,
         subAccount: null,
         referenceCode: "MOCKREF" + Date.now(),
-        description: `Mock payment for ${qrData.orderInvoiceNumber}`
+        description: `Mock payment for ${qrData.description}`
       };
 
-      await axios.post(`${API_URL}/membership/webhook/sepay`, mockPayload);
+      // Call our simple webhook handler endpoint
+      await axios.post(`${API_URL}/membership/sepay-webhook`, mockPayload);
       await fetchProfile();
     } catch (err: any) {
       alert("Lỗi khi giả lập thanh toán: " + (err.response?.data?.message || err.message));
@@ -156,6 +150,8 @@ export default function RewardsPage() {
   if (loading) {
     return <div className={styles.container}><div className={styles.loading}>Đang tải...</div></div>;
   }
+
+  const membershipPrice = qrData?.amount || 5000;
 
   return (
     <div className={styles.container}>
@@ -270,7 +266,7 @@ export default function RewardsPage() {
       </div>
 
       {/* Modal QR Code Thanh Toán */}
-      {showModal && qrData && (
+      {showModal && qrData && typeof qrData === "object" && qrData.qrUrl && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContainer}>
             <button className={styles.closeBtn} onClick={() => setShowModal(false)}>
@@ -284,7 +280,9 @@ export default function RewardsPage() {
             <div className={styles.modalBody}>
               <div className={styles.qrSection}>
                 <div className={styles.qrWrapper}>
-                  <img src={qrData.qrUrl} alt="VietQR SePay" className={styles.qrImage} />
+                  {qrData.qrUrl && (
+                    <img src={qrData.qrUrl} alt="VietQR SePay" className={styles.qrImage} />
+                  )}
                 </div>
                 <p className={styles.qrHelpText}>Quét mã QR bằng ứng dụng Ngân hàng của bạn để thanh toán tự động</p>
               </div>
@@ -295,16 +293,16 @@ export default function RewardsPage() {
                 <div className={styles.infoGrid}>
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Ngân hàng</span>
-                    <span className={styles.infoValue}>{qrData.bankName}</span>
+                    <span className={styles.infoValue}>{qrData?.bankName || ""}</span>
                   </div>
 
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Số tài khoản</span>
                     <div className={styles.copyableValue}>
-                      <span className={styles.infoValue}>{qrData.bankAccount}</span>
+                      <span className={styles.infoValue}>{qrData?.bankAccount || ""}</span>
                       <button
                         className={styles.copyBtn}
-                        onClick={() => copyToClipboard(qrData.bankAccount, 'bankAccount')}
+                        onClick={() => copyToClipboard(qrData?.bankAccount || "", 'bankAccount')}
                       >
                         {copiedField === 'bankAccount' ? <Check size={16} className={styles.checkIcon} /> : <Copy size={16} />}
                       </button>
@@ -314,7 +312,7 @@ export default function RewardsPage() {
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Số tiền</span>
                     <span className={`${styles.infoValue} ${styles.priceAmount}`}>
-                      {qrData.amount.toLocaleString("vi-VN")} VND
+                      {(qrData?.amount ?? 5000).toLocaleString("vi-VN")} VND
                     </span>
                   </div>
 
@@ -322,11 +320,11 @@ export default function RewardsPage() {
                     <span className={styles.infoLabel}>Nội dung</span>
                     <div className={styles.copyableValue}>
                       <span className={`${styles.infoValue} ${styles.invoiceCode}`}>
-                        {qrData.orderInvoiceNumber}
+                        {qrData?.description || ""}
                       </span>
                       <button
                         className={styles.copyBtn}
-                        onClick={() => copyToClipboard(qrData.orderInvoiceNumber, 'invoice')}
+                        onClick={() => copyToClipboard(qrData?.description || "", 'invoice')}
                       >
                         {copiedField === 'invoice' ? <Check size={16} className={styles.checkIcon} /> : <Copy size={16} />}
                       </button>
@@ -339,13 +337,6 @@ export default function RewardsPage() {
                   <span>Hệ thống đang tự động kiểm tra giao dịch của bạn...</span>
                 </div>
 
-                {/* Giả lập nút thanh toán cho môi trường thử nghiệm sandbox */}
-                {/* <div className={styles.testSection}>
-                  <p className={styles.testHelpText}>Bạn đang ở môi trường Test. Hãy nhấn nút dưới đây để giả lập chuyển khoản thành công:</p>
-                  <button className={styles.simulateBtn} onClick={handleSimulatePayment}>
-                    Giả lập chuyển khoản thành công (Test Sandbox)
-                  </button>
-                </div> */}
               </div>
             </div>
           </div>
