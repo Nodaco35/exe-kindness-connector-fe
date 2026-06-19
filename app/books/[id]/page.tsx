@@ -2,9 +2,10 @@
 
 import { API_URL } from "@/config/api";
 import { useEffect, useState, use } from "react";
-import { BookOpen, MapPin, Users, Heart, Share2, ChevronLeft } from "lucide-react";
+import { BookOpen, MapPin, Users, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import styles from "./page.module.scss";
 
@@ -19,6 +20,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
   const [bookRequests, setBookRequests] = useState<any[]>([]);
   const [showRequests, setShowRequests] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const authStr = localStorage.getItem("bookshare_auth_v3");
@@ -27,6 +29,26 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
     }
     fetchBook();
   }, [id]);
+
+  useEffect(() => {
+    if (!book || !book.images || book.images.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % book.images.length);
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [book, currentImageIndex]);
+
+  const handlePrevImage = () => {
+    if (!book || !book.images) return;
+    setCurrentImageIndex((prev) => (prev === 0 ? book.images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    if (!book || !book.images) return;
+    setCurrentImageIndex((prev) => (prev + 1) % book.images.length);
+  };
 
   const fetchBook = async () => {
     try {
@@ -126,7 +148,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const cover = book.images && book.images.length > 0 ? book.images[0] : "https://ui-avatars.com/api/?name=Book&background=random";
+  const images = book.images && book.images.length > 0 ? book.images : ["https://ui-avatars.com/api/?name=Book&background=random"];
 
   return (
     <div className={styles.container}>
@@ -136,14 +158,43 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
 
       <div className={styles.card}>
         <div className={styles.imageSection}>
-          <img
-            src={cover}
-            alt={book.title}
-            className={styles.image}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=Book&background=random";
-            }}
-          />
+          <div className={styles.carouselContainer} style={{ overflow: "hidden" }}>
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentImageIndex}
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -100, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                src={images[currentImageIndex]}
+                alt={`${book.title} - ảnh ${currentImageIndex + 1}`}
+                className={styles.image}
+                onError={(e: any) => {
+                  e.target.src = "https://ui-avatars.com/api/?name=Book&background=random";
+                }}
+              />
+            </AnimatePresence>
+            
+            {images.length > 1 && (
+              <>
+                <button onClick={handlePrevImage} className={`${styles.carouselBtn} ${styles.prev}`}>
+                  <ChevronLeft size={20} />
+                </button>
+                <button onClick={handleNextImage} className={`${styles.carouselBtn} ${styles.next}`}>
+                  <ChevronRight size={20} />
+                </button>
+                <div className={styles.carouselDots}>
+                  {images.map((_: any, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`${styles.dot} ${idx === currentImageIndex ? styles.dotActive : ""}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className={styles.infoSection}>

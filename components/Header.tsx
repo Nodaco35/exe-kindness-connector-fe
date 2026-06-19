@@ -45,48 +45,10 @@ export default function Header() {
   const [points, setPoints] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [auth, setAuth] = useState<StoredAuth | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchUnreadCount = useCallback(async () => {
-    const storedAuth = parseStoredAuth();
-    if (!storedAuth) {
-      setUnreadCount(0);
-      return;
-    }
-    try {
-      const res = await axios.get("https://exe-kindness-connector-be.onrender.com/chat/unread-count", {
-        headers: { Authorization: `Bearer ${storedAuth.token}` },
-      });
-      setUnreadCount(res.data.count || 0);
-    } catch (error) {
-      console.error("Failed to fetch unread count", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (auth?.isLoggedIn) {
-      void fetchUnreadCount();
-
-      // Poll every 15 seconds
-      const interval = setInterval(() => {
-        void fetchUnreadCount();
-      }, 15000);
-
-      // Listen for custom event
-      window.addEventListener("unread-count-updated", fetchUnreadCount);
-
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener("unread-count-updated", fetchUnreadCount);
-      };
-    } else {
-      setUnreadCount(0);
-    }
-  }, [auth, fetchUnreadCount]);
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
-  const unreadNotiCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+  const unreadCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
 
   const handleTestNotification = () => {
     const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
@@ -234,7 +196,7 @@ export default function Header() {
               <Link
                 href="/requests"
                 onClick={() => {
-                  if (unreadNotiCount > 0 && auth) {
+                  if (unreadCount > 0 && auth) {
                     axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
                       .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                       .catch(console.error);
@@ -244,7 +206,7 @@ export default function Header() {
                 title="Quản lý lượt xin"
               >
                 <Bell size={18} />
-                {unreadNotiCount > 0 && <span className={styles.chatBadge} />}
+                {unreadCount > 0 && <span className={styles.chatBadge} />}
               </Link>
 
               <Link
@@ -253,9 +215,7 @@ export default function Header() {
                 title="Tin nhắn"
               >
                 <MessageCircle size={18} />
-                {unreadCount > 0 && (
-                  <span className={styles.chatBadge}>{unreadCount}</span>
-                )}
+                <span className={styles.chatBadge} />
               </Link>
 
               <Link href="/post" className={styles.postButton}>
