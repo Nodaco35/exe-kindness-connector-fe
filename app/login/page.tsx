@@ -40,7 +40,10 @@ export default function Login() {
           })
         );
         window.dispatchEvent(new Event("auth-updated"));
-        router.push("/");
+        
+        const params = new URLSearchParams(window.location.search);
+        const callbackUrl = params.get("callbackUrl") || "/";
+        router.push(callbackUrl);
       }
     } catch (err: any) {
       if (err.response?.status === 401) {

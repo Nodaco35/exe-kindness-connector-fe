@@ -48,7 +48,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       const auth = readStoredAuth();
       if (!auth) {
         localStorage.removeItem("bookshare_auth_v3");
-        router.replace("/login");
+        router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
         return;
       }
 
@@ -62,7 +62,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         }
       } catch {
         localStorage.removeItem("bookshare_auth_v3");
-        router.replace("/login");
+        router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
       }
     };
 

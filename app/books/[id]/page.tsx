@@ -22,6 +22,12 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+
   useEffect(() => {
     const authStr = localStorage.getItem("bookshare_auth_v3");
     if (authStr) {
@@ -55,10 +61,77 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
       setLoading(true);
       const res = await axios.get(`${API_URL}/book/${id}`);
       setBook(res.data);
+      setLikesCount(res.data.likes?.length || 0);
+
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      if (authStr) {
+        const authData = JSON.parse(authStr);
+        setIsLiked(res.data.likes?.includes(authData.id) || false);
+      }
+
+      // Fetch comments too
+      const commentsRes = await axios.get(`${API_URL}/comment/book/${id}`);
+      setComments(commentsRes.data);
     } catch (err: any) {
       setError("Không tìm thấy sách hoặc đã bị xóa.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    const authStr = localStorage.getItem("bookshare_auth_v3");
+    if (!authStr) {
+      alert("Bạn cần đăng nhập để like!");
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    const authData = JSON.parse(authStr);
+    
+    // Optimistic Update
+    setIsLiked(!isLiked);
+    setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+    
+    try {
+      await axios.post(`${API_URL}/book/${id}/like`, {}, {
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+    } catch (err) {
+      // Revert if error
+      setIsLiked(!isLiked);
+      setLikesCount(prev => isLiked ? prev + 1 : prev - 1);
+      alert("Lỗi khi like sách.");
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Đã copy đường dẫn!");
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    
+    const authStr = localStorage.getItem("bookshare_auth_v3");
+    if (!authStr) {
+      alert("Bạn cần đăng nhập để bình luận!");
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    const authData = JSON.parse(authStr);
+    
+    try {
+      setSubmittingComment(true);
+      const res = await axios.post(`${API_URL}/comment/book/${id}`, { content: commentText }, {
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+      setComments(prev => [res.data, ...prev]);
+      setCommentText("");
+    } catch (err) {
+      alert("Lỗi khi gửi bình luận.");
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -68,7 +141,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
       const authStr = localStorage.getItem("bookshare_auth_v3");
       if (!authStr) {
         alert("Bạn cần đăng nhập để nhận sách!");
-        router.push("/login");
+        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
         return;
       }
       const auth = JSON.parse(authStr);
@@ -248,12 +321,42 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
                 <Users size={18} /> {requesting ? "Đang gửi..." : "Nhận sách này"}
               </button>
             )}
-            <button className={styles.iconButton}>
-              <Heart size={20} />
+            <button className={styles.iconButton} onClick={handleLike}>
+              <Heart size={20} fill={isLiked ? "red" : "none"} color={isLiked ? "red" : "currentColor"} />
+              <span className={styles.count}>{likesCount}</span>
             </button>
-            <button className={styles.iconButton}>
+            <button className={styles.iconButton} onClick={handleShare}>
               <Share2 size={20} />
             </button>
+          </div>
+
+          <div className={styles.commentsSection}>
+            <h3>Bình luận ({comments.length})</h3>
+            <form className={styles.commentForm} onSubmit={handleSubmitComment}>
+              <textarea 
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Viết bình luận của bạn..."
+                disabled={submittingComment}
+              />
+              <button type="submit" disabled={submittingComment || !commentText.trim()}>
+                {submittingComment ? "Đang gửi..." : "Gửi"}
+              </button>
+            </form>
+            <div className={styles.commentList}>
+              {comments.map((cmt) => (
+                <div key={cmt._id} className={styles.commentItem}>
+                  <img src={cmt.userId?.avatar || "https://ui-avatars.com/api/?name=User"} alt="Avatar" className={styles.cmtAvatar} />
+                  <div className={styles.cmtContent}>
+                    <div className={styles.cmtHeader}>
+                      <strong>{cmt.userId?.fullName || "Người dùng ẩn danh"}</strong>
+                      <span>{new Date(cmt.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p>{cmt.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {showRequests && auth?.id === book.owner?._id && (

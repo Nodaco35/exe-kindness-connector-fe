@@ -404,3 +404,121 @@
     background-color: var(--primary-light-bg);
   }
 }
+
+.count {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.commentsSection {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+  }
+}
+
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-color-surface);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.2);
+    }
+  }
+
+  button {
+    align-self: flex-end;
+    padding: 0.5rem 1.25rem;
+    background-color: var(--primary);
+    color: white;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.commentItem {
+  display: flex;
+  gap: 1rem;
+}
+
+.cmtAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cmtContent {
+  flex: 1;
+  background-color: var(--bg-color-surface);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+
+  p {
+    font-size: 0.875rem;
+    color: var(--text-main);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+  }
+}
+
+.cmtHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  strong {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+}

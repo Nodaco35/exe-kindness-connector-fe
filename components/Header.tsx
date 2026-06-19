@@ -241,7 +241,7 @@ export default function Header() {
             </>
           ) : (
             <div className={styles.authActions}>
-              <Link href="/login" className={styles.loginButton}>
+              <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`} className={styles.loginButton}>
                 Đăng nhập để trao đổi
               </Link>
               <Link href="/register" className={styles.registerButton}>
