@@ -22,7 +22,7 @@ export default function RewardsPage() {
     bankAccount: string;
     bankName: string;
     amount: number;
-    description: string;
+    orderInvoiceNumber: string;
   } | null>(null);
 
   useEffect(() => {
@@ -64,26 +64,12 @@ export default function RewardsPage() {
 
       setPoints(res.data.points || 0);
       setIsPremium(res.data.isPremium || false);
-
-      // Fetch QR info as well
-      await fetchQrInfo(auth.token);
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         router.push("/login");
       }
     } finally {
       if (!isSilent) setLoading(false);
-    }
-  };
-
-  const fetchQrInfo = async (token: string) => {
-    try {
-      const res = await axios.get(`${API_URL}/membership/qr-info`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setQrData(res.data);
-    } catch (err) {
-      console.error("Lỗi khi tải thông tin QR SePay:", err);
     }
   };
 
@@ -108,11 +94,31 @@ export default function RewardsPage() {
   };
 
   const handleBuyMembershipByMoney = async () => {
-    if (!qrData || typeof qrData !== "object" || !qrData.qrUrl || !qrData.bankAccount) {
-      alert("Không thể kết nối với cổng thanh toán SePay trên Render. Hãy đảm bảo bạn đã đẩy code backend mới lên nhánh chính và Render đã hoàn tất tiến trình Deploy nhé!");
-      return;
+    try {
+      setPaying(true);
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const auth = JSON.parse(authStr!);
+
+      const response = await axios.post(
+        `${API_URL}/membership/checkout`,
+        {
+          successUrl: `${window.location.origin}/rewards?payment=success`,
+          errorUrl: `${window.location.origin}/rewards?payment=error`,
+          cancelUrl: `${window.location.origin}/rewards?payment=cancel`,
+        },
+        {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        }
+      );
+
+      const { qrUrl, bankAccount, bankName, amount, orderInvoiceNumber } = response.data;
+      setQrData({ qrUrl, bankAccount, bankName, amount, orderInvoiceNumber });
+      setShowModal(true);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Lỗi khi tạo thanh toán SePay!");
+    } finally {
+      setPaying(false);
     }
-    setShowModal(true);
   };
 
   const handleSimulatePayment = async () => {
@@ -124,17 +130,17 @@ export default function RewardsPage() {
         transactionDate: new Date().toISOString().replace("T", " ").substring(0, 19),
         accountNumber: qrData.bankAccount,
         code: null,
-        content: qrData.description,
+        content: qrData.orderInvoiceNumber,
         transferType: "in",
         transferAmount: qrData.amount,
         accumulated: 10000000,
         subAccount: null,
         referenceCode: "MOCKREF" + Date.now(),
-        description: `Mock payment for ${qrData.description}`
+        description: `Mock payment for ${qrData.orderInvoiceNumber}`
       };
 
       // Call our simple webhook handler endpoint
-      await axios.post(`${API_URL}/membership/sepay-webhook`, mockPayload);
+      await axios.post(`${API_URL}/membership/webhook/sepay`, mockPayload);
       await fetchProfile();
     } catch (err: any) {
       alert("Lỗi khi giả lập thanh toán: " + (err.response?.data?.message || err.message));
@@ -320,11 +326,11 @@ export default function RewardsPage() {
                     <span className={styles.infoLabel}>Nội dung</span>
                     <div className={styles.copyableValue}>
                       <span className={`${styles.infoValue} ${styles.invoiceCode}`}>
-                        {qrData?.description || ""}
+                        {qrData?.orderInvoiceNumber || ""}
                       </span>
                       <button
                         className={styles.copyBtn}
-                        onClick={() => copyToClipboard(qrData?.description || "", 'invoice')}
+                        onClick={() => copyToClipboard(qrData?.orderInvoiceNumber || "", 'invoice')}
                       >
                         {copiedField === 'invoice' ? <Check size={16} className={styles.checkIcon} /> : <Copy size={16} />}
                       </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { API_URL } from "@/config/api";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -43,6 +43,39 @@ type BookWithCategories = Book & {
   categories?: CategoryRef[];
   advancedCategories?: CategoryRef[];
 };
+
+const HANOI_DISTRICTS = [
+  "Quận Ba Đình",
+  "Quận Hoàn Kiếm",
+  "Quận Tây Hồ",
+  "Quận Long Biên",
+  "Quận Cầu Giấy",
+  "Quận Đống Đa",
+  "Quận Hai Bà Trưng",
+  "Quận Hoàng Mai",
+  "Quận Thanh Xuân",
+  "Quận Nam Từ Liêm",
+  "Quận Bắc Từ Liêm",
+  "Quận Hà Đông",
+  "Thị xã Sơn Tây",
+  "Huyện Sóc Sơn",
+  "Huyện Đông Anh",
+  "Huyện Gia Lâm",
+  "Huyện Thanh Trì",
+  "Huyện Mê Linh",
+  "Huyện Ba Vì",
+  "Huyện Phúc Thọ",
+  "Huyện Đan Phượng",
+  "Huyện Hoài Đức",
+  "Huyện Quốc Oai",
+  "Huyện Thạch Thất",
+  "Huyện Chương Mỹ",
+  "Huyện Thanh Oai",
+  "Huyện Thường Tín",
+  "Huyện Phú Xuyên",
+  "Huyện Ứng Hòa",
+  "Huyện Mỹ Đức",
+];
 
 const categoryGroups = bookCategories as CategoryGroup[];
 
@@ -97,6 +130,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState("Đang tải vị trí...");
+  const [userDistrict, setUserDistrict] = useState("");
 
   const [activeRadius, setActiveRadius] = useState("10km");
   const [selectedTopCategory, setSelectedTopCategory] = useState<string>("all");
@@ -124,6 +158,7 @@ export default function Home() {
       const addr = res.data.address;
       if (addr && addr.length > 0) {
         setUserLocation(`${addr[0].district}, ${addr[0].city}`);
+        setUserDistrict(addr[0].district);
       } else {
         setUserLocation("Toàn quốc");
       }
@@ -133,10 +168,18 @@ export default function Home() {
     }
   };
 
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/book`);
+      const params = new URLSearchParams();
+      if (userDistrict) {
+        params.append("district", userDistrict);
+      }
+      if (activeRadius) {
+        params.append("radius", activeRadius.replace("km", ""));
+      }
+
+      const response = await axios.get(`${API_URL}/book?${params.toString()}`);
       if (response.data) {
         setBooks(response.data);
       }
@@ -145,16 +188,19 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userDistrict, activeRadius]);
+
+  useEffect(() => {
+    void fetchUserLocation();
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void fetchBooks();
-      void fetchUserLocation();
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [fetchBooks]);
 
   const activeTopCategory = useMemo(
     () => categoryGroups.find((category) => category.slug === selectedTopCategory) ?? null,
@@ -221,6 +267,7 @@ export default function Home() {
     setSelectedSubCategory("all");
     setSelectedCondition("all");
     setSearchTerm("");
+    setUserDistrict("");
     setCurrentPage(1);
   };
 
@@ -331,12 +378,28 @@ export default function Home() {
               </div>
 
               <div className={styles.filterGroup}>
+                <h4>Khu vực (Hà Nội)</h4>
+                <select
+                  value={userDistrict}
+                  onChange={(e) => setUserDistrict(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="">Toàn quốc (Tất cả)</option>
+                  {HANOI_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
                 <h4>Bán kính xung quanh</h4>
                 <div className={styles.filterGrid2}>
                   {["1km", "3km", "5km", "10km"].map((radius) => (
                     <button
                       key={radius}
-                      onClick={() => setActiveRadius(radius)}
+                      onClick={() => setActiveRadius(prev => prev === radius ? "" : radius)}
                       className={`${styles.filterBtn} ${activeRadius === radius ? styles.filterBtnActive : ""}`}
                     >
                       {radius}
@@ -356,7 +419,7 @@ export default function Home() {
                   ].map((condition) => (
                     <button
                       key={condition.id}
-                      onClick={() => setSelectedCondition(condition.id)}
+                      onClick={() => setSelectedCondition(prev => prev === condition.id ? "all" : condition.id)}
                       className={`${styles.filterBtnRow} ${selectedCondition === condition.id ? styles.filterBtnActive : ""
                         }`}
                     >
@@ -555,12 +618,28 @@ export default function Home() {
               )}
 
               <div className={styles.filterGroup}>
+                <h4>Khu vực (Hà Nội)</h4>
+                <select
+                  value={userDistrict}
+                  onChange={(e) => setUserDistrict(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="">Toàn quốc (Tất cả)</option>
+                  {HANOI_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
                 <h4>Bán kính xung quanh</h4>
                 <div className={styles.filterGrid4}>
                   {["1km", "3km", "5km", "10km"].map((radius) => (
                     <button
                       key={radius}
-                      onClick={() => setActiveRadius(radius)}
+                      onClick={() => setActiveRadius(prev => prev === radius ? "" : radius)}
                       className={`${styles.filterBtn} ${activeRadius === radius ? styles.filterBtnActive : ""}`}
                     >
                       {radius}
@@ -580,7 +659,7 @@ export default function Home() {
                   ].map((condition) => (
                     <button
                       key={condition.id}
-                      onClick={() => setSelectedCondition(condition.id)}
+                      onClick={() => setSelectedCondition(prev => prev === condition.id ? "all" : condition.id)}
                       className={`${styles.filterBtn} ${selectedCondition === condition.id ? styles.filterBtnActive : ""
                         }`}
                     >
