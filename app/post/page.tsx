@@ -19,6 +19,8 @@ export default function PostBook() {
     author: "",
     description: "",
     codition: "USED", 
+    category: "",
+    advancedCategory: "",
     images: "",
     location: {
       district: "Cầu Giấy",

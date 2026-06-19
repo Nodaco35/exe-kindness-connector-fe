@@ -86,7 +86,7 @@ export default function Header() {
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
-  const unreadCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+  const unreadNotiCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
 
   const handleTestNotification = () => {
     const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
@@ -234,7 +234,7 @@ export default function Header() {
               <Link
                 href="/requests"
                 onClick={() => {
-                  if (unreadCount > 0 && auth) {
+                  if (unreadNotiCount > 0 && auth) {
                     axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
                       .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                       .catch(console.error);
@@ -244,7 +244,7 @@ export default function Header() {
                 title="Quản lý lượt xin"
               >
                 <Bell size={18} />
-                {unreadCount > 0 && <span className={styles.chatBadge} />}
+                {unreadNotiCount > 0 && <span className={styles.chatBadge} />}
               </Link>
 
               <Link
