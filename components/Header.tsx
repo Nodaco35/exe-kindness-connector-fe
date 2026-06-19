@@ -48,7 +48,44 @@ export default function Header() {
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
-  const unreadCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+  const unreadNotificationCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const fetchUnreadChatCount = useCallback(async () => {
+    const storedAuth = parseStoredAuth();
+    if (!storedAuth) {
+      setUnreadChatCount(0);
+      return;
+    }
+    try {
+      const res = await axios.get(`${API_URL}/chat/unread-count`, {
+        headers: { Authorization: `Bearer ${storedAuth.token}` },
+      });
+      setUnreadChatCount(res.data.count || 0);
+    } catch (error) {
+      console.error("Failed to fetch unread chat count", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (auth?.isLoggedIn) {
+      void fetchUnreadChatCount();
+
+      const interval = setInterval(() => {
+        void fetchUnreadChatCount();
+      }, 15000);
+
+      window.addEventListener("unread-count-updated", fetchUnreadChatCount);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener("unread-count-updated", fetchUnreadChatCount);
+      };
+    } else {
+      setUnreadChatCount(0);
+    }
+  }, [auth, fetchUnreadChatCount]);
 
   const handleTestNotification = () => {
     const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
@@ -196,7 +233,7 @@ export default function Header() {
               <Link
                 href="/requests"
                 onClick={() => {
-                  if (unreadCount > 0 && auth) {
+                  if (unreadNotificationCount > 0 && auth) {
                     axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
                       .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                       .catch(console.error);
@@ -206,7 +243,7 @@ export default function Header() {
                 title="Quản lý lượt xin"
               >
                 <Bell size={18} />
-                {unreadCount > 0 && <span className={styles.chatBadge} />}
+                {unreadNotificationCount > 0 && <span className={styles.chatBadge} />}
               </Link>
 
               <Link
@@ -215,7 +252,9 @@ export default function Header() {
                 title="Tin nhắn"
               >
                 <MessageCircle size={18} />
-                <span className={styles.chatBadge} />
+                {unreadChatCount > 0 && (
+                  <span className={styles.chatCountBadge}>{unreadChatCount}</span>
+                )}
               </Link>
 
               <Link href="/post" className={styles.postButton}>

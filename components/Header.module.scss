@@ -181,6 +181,26 @@
   50% { opacity: 0.4; }
 }
 
+.chatCountBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 4px;
+  background-color: #ef4444;
+  border-radius: 9999px;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--secondary);
+  line-height: 1;
+}
+
+
 .postButton {
   display: none;
   @media (min-width: 768px) {
