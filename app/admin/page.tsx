@@ -3,19 +3,161 @@
 import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut } from "lucide-react";
+import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard } from "lucide-react";
 import axios from "axios";
 import styles from "./page.module.scss";
+import CustomSelect from "@/components/CustomSelect";
+import bookCategories from "../../book_categories.json";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState({ totalUsers: 0, totalBooks: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalBooks: 0, totalPremiumUsers: 0, totalRevenue: 0 });
   const [users, setUsers] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
+  const [memberships, setMemberships] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("USERS");
   const [loading, setLoading] = useState(true);
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
+
+  const [editingBook, setEditingBook] = useState<any | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    author: "",
+    description: "",
+    codition: "",
+    images: [] as string[],
+    category: "",
+    advancedCategory: "",
+    location: {
+      district: "Cầu Giấy",
+      city: "Hà Nội"
+    }
+  });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [savingBook, setSavingBook] = useState(false);
+  const [modalError, setModalError] = useState("");
+
+  const activeCategoryGroup = bookCategories.find(c => c.slug === editFormData.category);
+
+  const handleEditChange = (e: any) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      if (name === "category") {
+        const newGroup = bookCategories.find(c => c.slug === value);
+        if (newGroup && newGroup.subcategories.length > 0) {
+          newData.advancedCategory = newGroup.subcategories[0].slug;
+        } else {
+          newData.advancedCategory = "";
+        }
+      }
+      return newData;
+    });
+  };
+
+  const handleEditLocationChange = (e: any) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [name]: value
+      }
+    }));
+  };
+
+  const handleOpenEditModal = (book: any) => {
+    setEditingBook(book);
+    setEditFormData({
+      title: book.title || "",
+      author: book.author || "",
+      description: book.description || "",
+      codition: book.codition || "",
+      images: book.images || [],
+      category: book.categories?.[0] || "",
+      advancedCategory: book.advancedCategories?.[0] || "",
+      location: {
+        district: book.location?.district || "Cầu Giấy",
+        city: book.location?.city || "Hà Nội"
+      }
+    });
+    setModalError("");
+  };
+
+  const handleModalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+    if (validFiles.length < files.length) {
+      setModalError("Một số ảnh có dung lượng vượt quá 5MB và đã bị bỏ qua.");
+    }
+    if (!validFiles.length) return;
+
+    setUploadingImage(true);
+    setModalError("");
+
+    try {
+      const uploadPromises = validFiles.map(async (file) => {
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        const res = await axios.post(`${API_URL}/upload/image`, uploadData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        return res.data?.url;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      const validUrls = urls.filter(url => Boolean(url));
+      
+      if (validUrls.length > 0) {
+        setEditFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...validUrls]
+        }));
+      }
+    } catch (err) {
+      setModalError("Lỗi khi tải ảnh lên. Vui lòng thử lại.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleSaveBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBook) return;
+    setSavingBook(true);
+    setModalError("");
+
+    try {
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const auth = JSON.parse(authStr!);
+      
+      const payload = {
+        title: editFormData.title,
+        author: editFormData.author,
+        description: editFormData.description,
+        codition: editFormData.codition,
+        images: editFormData.images,
+        categories: editFormData.category ? [editFormData.category] : [],
+        advancedCategories: editFormData.advancedCategory ? [editFormData.advancedCategory] : [],
+        location: editFormData.location
+      };
+
+      await axios.patch(`${API_URL}/book/${editingBook._id}`, payload, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+
+      alert("Cập nhật thông tin sách thành công!");
+      setEditingBook(null);
+      fetchAdminData();
+    } catch (err: any) {
+      setModalError(err.response?.data?.message || err.message || "Lỗi khi cập nhật sách");
+    } finally {
+      setSavingBook(false);
+    }
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -39,17 +181,19 @@ export default function AdminDashboard() {
 
       const headers = { Authorization: `Bearer ${auth.token}` };
       
-      const [statsRes, usersRes, booksRes, profileRes] = await Promise.all([
+      const [statsRes, usersRes, booksRes, profileRes, membershipsRes] = await Promise.all([
         axios.get(`${API_URL}/admin/stats`, { headers }),
         axios.get(`${API_URL}/admin/users`, { headers }),
         axios.get(`${API_URL}/admin/books`, { headers }),
-        axios.get(`${API_URL}/user/me`, { headers })
+        axios.get(`${API_URL}/user/me`, { headers }),
+        axios.get(`${API_URL}/admin/memberships`, { headers })
       ]);
 
       setStats(statsRes.data);
       setUsers(usersRes.data);
       setBooks(booksRes.data);
       setAdminProfile(profileRes.data);
+      setMemberships(membershipsRes.data);
       if (!profileForm.fullName && !profileForm.avatar) {
         setProfileForm({ fullName: profileRes.data.fullName || '', avatar: profileRes.data.avatar || '' });
       }
@@ -134,6 +278,12 @@ export default function AdminDashboard() {
             <BookOpen size={18} /> Quản lý Sách
           </button>
           <button 
+            className={`${styles.navItem} ${activeTab === "MEMBERSHIPS" ? styles.active : ""}`}
+            onClick={() => setActiveTab("MEMBERSHIPS")}
+          >
+            <CreditCard size={18} /> Quản lý Premium
+          </button>
+          <button 
             className={`${styles.navItem} ${activeTab === "PROFILE" ? styles.active : ""}`}
             onClick={() => setActiveTab("PROFILE")}
           >
@@ -152,6 +302,7 @@ export default function AdminDashboard() {
           <h1>
             {activeTab === "USERS" && "Quản lý Người Dùng"}
             {activeTab === "BOOKS" && "Quản lý Sách"}
+            {activeTab === "MEMBERSHIPS" && "Quản lý Premium & Doanh thu"}
             {activeTab === "PROFILE" && "Trang Cá Nhân"}
           </h1>
           <div className={styles.stats}>
@@ -162,6 +313,14 @@ export default function AdminDashboard() {
             <div className={styles.statCard}>
               <span>Tổng Sách</span>
               <strong>{stats.totalBooks}</strong>
+            </div>
+            <div className={styles.statCard}>
+              <span>Tổng Premium</span>
+              <strong>{stats.totalPremiumUsers || 0}</strong>
+            </div>
+            <div className={styles.statCard}>
+              <span>Tổng Doanh Thu</span>
+              <strong style={{ color: "#10B981" }}>{(stats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
             </div>
           </div>
         </div>
@@ -232,18 +391,67 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td>
-                        {book.status !== "HIDDEN" ? (
-                          <button onClick={() => handleUpdateBookStatus(book._id, "HIDDEN")} className={styles.actionBtnLock}>
-                            <Ban size={14} /> Ẩn sách
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button onClick={() => handleOpenEditModal(book)} className={styles.actionBtnEdit}>
+                            <Pencil size={14} /> Sửa
                           </button>
-                        ) : (
-                          <button onClick={() => handleUpdateBookStatus(book._id, "AVAILABLE")} className={styles.actionBtnUnlock}>
-                            <CheckCircle size={14} /> Hiện sách
-                          </button>
-                        )}
+                          {book.status !== "HIDDEN" ? (
+                            <button onClick={() => handleUpdateBookStatus(book._id, "HIDDEN")} className={styles.actionBtnLock}>
+                              <Ban size={14} /> Ẩn sách
+                            </button>
+                          ) : (
+                            <button onClick={() => handleUpdateBookStatus(book._id, "AVAILABLE")} className={styles.actionBtnUnlock}>
+                              <CheckCircle size={14} /> Hiện sách
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "MEMBERSHIPS" && (
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Tên Người dùng</th>
+                    <th>Email</th>
+                    <th>Số tiền nạp</th>
+                    <th>Mã giao dịch</th>
+                    <th>Phương thức</th>
+                    <th>Ngày bắt đầu</th>
+                    <th>Ngày hết hạn</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {memberships.map((m: any) => (
+                    <tr key={m._id}>
+                      <td>{m.user?.fullName || 'N/A'}</td>
+                      <td>{m.user?.email || 'N/A'}</td>
+                      <td style={{ fontWeight: 600, color: "#10B981" }}>{(m.amount || 0).toLocaleString('vi-VN')} đ</td>
+                      <td><code style={{ background: "rgba(0,0,0,0.05)", padding: "0.2rem 0.4rem", borderRadius: "0.25rem", fontSize: "0.85rem" }}>{m.transactionId || 'N/A'}</code></td>
+                      <td><span className={styles.badge}>{m.method}</span></td>
+                      <td>{new Date(m.startDate).toLocaleDateString('vi-VN')}</td>
+                      <td>{new Date(m.endDate).toLocaleDateString('vi-VN')}</td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${m.status === 'ACTIVE' ? styles.AVAILABLE : styles.HIDDEN}`}>
+                          {m.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {memberships.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                        Chưa có giao dịch nạp tiền Premium nào.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -282,6 +490,167 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+      {editingBook && (
+        <div className={styles.modalOverlay} onClick={() => setEditingBook(null)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <button className={styles.closeBtn} onClick={() => setEditingBook(null)}>
+              <X size={20} />
+            </button>
+            <div className={styles.modalHeader}>
+              <h2>Sửa thông tin sách</h2>
+              <p>Chỉnh sửa các chi tiết của bài post sách</p>
+            </div>
+            
+            <form onSubmit={handleSaveBook} className={styles.modalForm}>
+              {modalError && <div className={styles.modalError}>{modalError}</div>}
+              
+              <div className={styles.modalInputGroup}>
+                <label>Tên sách</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={editFormData.title}
+                  onChange={handleEditChange}
+                  className={styles.modalInput}
+                  required
+                />
+              </div>
+
+              <div className={styles.modalInputGroup}>
+                <label>Tác giả</label>
+                <input
+                  type="text"
+                  name="author"
+                  value={editFormData.author}
+                  onChange={handleEditChange}
+                  className={styles.modalInput}
+                  required
+                />
+              </div>
+
+              <div className={styles.modalRowGroup}>
+                <div className={styles.modalInputGroup}>
+                  <label>Tình trạng</label>
+                  <CustomSelect
+                    value={editFormData.codition}
+                    onChange={(val) => handleEditChange({ target: { name: "codition", value: val } })}
+                    options={[
+                      { value: "NEW", label: "Mới" },
+                      { value: "LIKE_NEW", label: "Như Mới" },
+                      { value: "USED", label: "Cũ/Đã sử dụng" }
+                    ]}
+                    placeholder="Chọn Tình trạng..."
+                    required
+                  />
+                </div>
+                
+                <div className={styles.modalInputGroup}>
+                  <label>Khu vực (Quận)</label>
+                  <CustomSelect
+                    value={editFormData.location.district}
+                    onChange={(val) => handleEditLocationChange({ target: { name: "district", value: val } })}
+                    options={[
+                      { value: "Cầu Giấy", label: "Cầu Giấy" },
+                      { value: "Đống Đa", label: "Đống Đa" },
+                      { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
+                      { value: "Hà Đông", label: "Hà Đông" }
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalRowGroup}>
+                <div className={styles.modalInputGroup}>
+                  <label>Thể loại chính</label>
+                  <CustomSelect
+                    value={editFormData.category}
+                    onChange={(val) => handleEditChange({ target: { name: "category", value: val } })}
+                    options={bookCategories.map(cat => ({ value: cat.slug, label: cat.name }))}
+                    placeholder="Chọn Thể loại chính..."
+                    required
+                  />
+                </div>
+                
+                <div className={styles.modalInputGroup}>
+                  <label>Thể loại phụ</label>
+                  <CustomSelect
+                    value={editFormData.advancedCategory}
+                    onChange={(val) => handleEditChange({ target: { name: "advancedCategory", value: val } })}
+                    options={activeCategoryGroup?.subcategories.map(sub => ({ value: sub.slug, label: sub.name })) || []}
+                    placeholder="Chọn Thể loại phụ..."
+                    disabled={!activeCategoryGroup || activeCategoryGroup.subcategories.length === 0}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalInputGroup}>
+                <label>Mô tả</label>
+                <textarea
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleEditChange}
+                  className={styles.modalTextarea}
+                  required
+                />
+              </div>
+
+              <div className={styles.modalInputGroup}>
+                <label>Ảnh sách (Có thể chọn nhiều ảnh, tối đa 5MB/ảnh)</label>
+                <div className={styles.imageUploadWrapper}>
+                  {editFormData.images.map((imgUrl, idx) => (
+                    <div key={idx} className={styles.imagePreviewCard}>
+                      <img src={imgUrl} alt={`Preview ${idx + 1}`} />
+                      <button 
+                        type="button" 
+                        onClick={() => setEditFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                        className={styles.removeImageBtn}
+                      >
+                        <X size={14} />
+                      </button>
+                      {idx === 0 && (
+                        <div className={styles.coverImageBadge}>
+                          Ảnh bìa
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <div className={styles.uploadImagePlaceholder}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleModalImageUpload}
+                      disabled={uploadingImage}
+                      className={styles.fileInput}
+                    />
+                    <div className={styles.placeholderContent}>
+                      {uploadingImage ? (
+                        <div className={styles.spinner}></div>
+                      ) : (
+                        <>
+                          <ImageIcon size={20} />
+                          <span>Thêm ảnh</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setEditingBook(null)} disabled={savingBook}>
+                  Hủy
+                </button>
+                <button type="submit" className={styles.submitBtn} disabled={savingBook || uploadingImage}>
+                  {savingBook ? "Đang lưu..." : <><Upload size={16} /> Lưu thay đổi</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
