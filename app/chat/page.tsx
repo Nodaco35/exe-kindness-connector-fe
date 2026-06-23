@@ -316,12 +316,10 @@ function ChatComponent() {
 
               <div className={styles.messagesContainer}>
                 {(() => {
-                  let lastSeenMessageId = null;
+                  let lastNonSystemMsgIdx = -1;
                   for (let i = messages.length - 1; i >= 0; i--) {
-                    const msg = messages[i];
-                    const isMine = typeof msg.senderId === 'string' ? msg.senderId === userId : msg.senderId?._id === userId;
-                    if (isMine && !msg.isSystem && msg.status === 'SEEN') {
-                      lastSeenMessageId = msg._id || i;
+                    if (!messages[i].isSystem) {
+                      lastNonSystemMsgIdx = i;
                       break;
                     }
                   }
@@ -336,7 +334,7 @@ function ChatComponent() {
                     }
 
                     const isMine = typeof msg.senderId === 'string' ? msg.senderId === userId : msg.senderId?._id === userId;
-                    const isLastSeen = (msg._id && msg._id === lastSeenMessageId) || (!msg._id && idx === lastSeenMessageId);
+                    const isLastNonSystem = idx === lastNonSystemMsgIdx;
 
                     return (
                       <div key={msg._id || idx} className={`${styles.messageWrapper} ${isMine ? styles.mine : styles.theirs}`}>
@@ -348,7 +346,7 @@ function ChatComponent() {
                         <div className={styles.messageContentArea}>
                           <div className={styles.messageBubble}>
                             {msg.content}
-                            {isMine && !msg.isSystem && msg.status !== 'SEEN' && (
+                            {isMine && !msg.isSystem && isLastNonSystem && msg.status !== 'SEEN' && (
                               <div className={styles.messageStatus}>
                                 {msg.status === 'DELIVERED' ? (
                                   <div title="Đã nhận"><CheckCheck size={14} className={styles.deliveredIcon} /></div>
@@ -358,7 +356,7 @@ function ChatComponent() {
                               </div>
                             )}
                           </div>
-                          {isMine && !msg.isSystem && msg.status === 'SEEN' && isLastSeen && (
+                          {isMine && !msg.isSystem && isLastNonSystem && msg.status === 'SEEN' && (
                             <span className={styles.seenText}>Đã xem</span>
                           )}
                         </div>
