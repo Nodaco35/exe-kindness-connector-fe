@@ -65,6 +65,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
             type: data.type || "BOOK_REQUEST",
             title: data.title || "Thông báo mới",
             message: data.message || "",
+            url: data.url,
             createdAt: data.createdAt || Date.now()
           });
         });
