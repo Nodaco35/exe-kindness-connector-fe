@@ -7,6 +7,7 @@ export interface AppNotification {
   type: NotificationType;
   title: string;
   message: string;
+  url?: string;
   isRead: boolean;
   isVisible: boolean;
   createdAt: number;

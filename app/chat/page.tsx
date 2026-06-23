@@ -121,7 +121,16 @@ function ChatComponent() {
       fetchRooms(auth);
 
       return () => {
-        socketRef.current?.disconnect();
+        if (socketRef.current) {
+          socketRef.current.off("connect");
+          socketRef.current.off("newMessage");
+          socketRef.current.off("messagesSeen");
+          socketRef.current.off("errorMessage");
+          socketRef.current.off("newChatRoom");
+          socketRef.current.off("exchangeUpdated");
+          socketRef.current.off("exchange_canceled");
+          socketRef.current.off("exchange_completed");
+        }
       };
     }
   }, []);

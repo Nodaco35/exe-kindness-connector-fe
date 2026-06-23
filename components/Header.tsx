@@ -48,7 +48,7 @@ export default function Header() {
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
-  const unreadNotificationCount = notifications.filter(n => !n.isRead && !n.isVisible && n.type === 'BOOK_REQUEST').length;
+  const unreadNotificationCount = notifications.filter(n => !n.isRead && n.type === 'BOOK_REQUEST').length;
 
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
@@ -78,6 +78,25 @@ export default function Header() {
 
       window.addEventListener("unread-count-updated", fetchUnreadChatCount);
 
+      if (socket) {
+        const handleNewMessage = () => fetchUnreadChatCount();
+        const handleNewNotification = (data: any) => {
+          if (data.type === 'CHAT_MESSAGE') {
+            fetchUnreadChatCount();
+          }
+        };
+        
+        socket.on('newMessage', handleNewMessage);
+        socket.on('new_notification', handleNewNotification);
+
+        return () => {
+          clearInterval(interval);
+          window.removeEventListener("unread-count-updated", fetchUnreadChatCount);
+          socket.off('newMessage', handleNewMessage);
+          socket.off('new_notification', handleNewNotification);
+        };
+      }
+
       return () => {
         clearInterval(interval);
         window.removeEventListener("unread-count-updated", fetchUnreadChatCount);
@@ -85,7 +104,7 @@ export default function Header() {
     } else {
       setUnreadChatCount(0);
     }
-  }, [auth, fetchUnreadChatCount]);
+  }, [auth, fetchUnreadChatCount, socket]);
 
   const handleTestNotification = () => {
     const targetUserId = prompt("Nhập ID người dùng muốn gửi thông báo test:");
