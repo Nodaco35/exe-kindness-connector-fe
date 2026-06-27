@@ -9,6 +9,7 @@ import axios from "axios";
 import bookCategories from "../../book_categories.json";
 import styles from "./page.module.scss";
 import CustomSelect from "@/components/CustomSelect";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 function PostBookContent() {
   const router = useRouter();
@@ -289,6 +290,14 @@ function PostBookContent() {
                 onChange={(e) => setIsbnQuery(e.target.value)}
                 placeholder="VD: 9786043825827"
                 className={styles.input}
+              />
+              <BarcodeScanner 
+                onResult={(code) => {
+                  setIsbnQuery(code);
+                  // Optional: Automatically fetch when scanned
+                  // setTimeout(fetchBookInfo, 100); 
+                }}
+                onError={(msg) => setError(msg)}
               />
               <button 
                 type="button" 
