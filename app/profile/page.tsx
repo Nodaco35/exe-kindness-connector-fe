@@ -34,6 +34,7 @@ export default function ProfilePage() {
   // Data States
   const [authData, setAuthData] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -51,6 +52,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
+    fetchFavorites(); // Tải sách đã thích khi vừa mount trang để hiển thị đúng số lượng ngay từ đầu
   }, []);
 
   useEffect(() => {
@@ -84,6 +86,11 @@ export default function ProfilePage() {
         district: addr?.district || "Cầu Giấy",
         city: addr?.city || "Hà Nội"
       });
+
+      // Đặt số lượng sách đã thích lấy từ backend API (được đếm qua totalFavoritedBooks)
+      if (user.totalFavoritedBooks !== undefined) {
+        setFavoritesCount(user.totalFavoritedBooks);
+      }
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         router.push("/login");
@@ -104,6 +111,7 @@ export default function ProfilePage() {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       setFavorites(res.data);
+      setFavoritesCount(res.data.length); // Cập nhật lại số lượng theo thực tế
     } catch (err) {
       console.error("Lỗi lấy danh sách yêu thích", err);
     } finally {
@@ -124,6 +132,7 @@ export default function ProfilePage() {
 
       // Xóa khỏi danh sách favorites ở client
       setFavorites(prev => prev.filter(b => b._id !== bookId));
+      setFavoritesCount(prev => Math.max(0, prev - 1)); // Giảm đi 1 khi bỏ thích thành công
     } catch (err) {
       console.error("Không thể bỏ thích", err);
     }
@@ -258,7 +267,7 @@ export default function ProfilePage() {
             className={`${styles.tab} ${activeTab === "favorites" ? styles.activeTab : ""}`}
             onClick={() => setActiveTab("favorites")}
           >
-            <Heart size={16} /> Sách đã tim ({favorites.length})
+            <Heart size={16} /> Sách đã tim ({favoritesCount})
           </button>
           <button 
             className={`${styles.tab} ${activeTab === "password" ? styles.activeTab : ""}`}
