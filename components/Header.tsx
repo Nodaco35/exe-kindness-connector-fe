@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -271,6 +271,14 @@ export default function Header() {
                 </Link>
 
                 <Link
+                  href="/my-books"
+                  className={`${styles.chatIcon} ${pathname.startsWith("/my-books") ? styles.chatIconActive : ""}`}
+                  title="Sách của tôi"
+                >
+                  <BookMarked size={18} />
+                </Link>
+
+                <Link
                   href="/chat"
                   className={`${styles.chatIcon} ${pathname.startsWith("/chat") ? styles.chatIconActive : ""}`}
                   title="Tin nhắn"
@@ -389,6 +397,10 @@ export default function Header() {
               <Link href="/chat" onClick={closeMobileMenu} className={styles.mobileActionButton}>
                 <MessageCircle size={16} /> Tin nhắn 
                 {unreadChatCount > 0 && <span className={styles.mobileUnreadBadge}>{unreadChatCount}</span>}
+              </Link>
+
+              <Link href="/my-books" onClick={closeMobileMenu} className={styles.mobileActionButton}>
+                <BookMarked size={16} /> Sách của tôi
               </Link>
 
               <button onClick={handleLogout} className={`${styles.mobileActionButton} ${styles.mobileLogoutButton}`}>
