@@ -50,6 +50,10 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  @media (max-width: 640px) {
+    padding: 0.5rem;
+  }
 }
 
 .metaRow {
@@ -111,6 +115,10 @@
 
   &:hover {
     color: var(--primary);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 0.875rem;
   }
 }
 
@@ -180,9 +188,14 @@
   text-decoration: none;
   cursor: pointer;
   letter-spacing: 0.01em;
+  min-height: 44px; // UI/UX Pro Max: Touch target size
 
   &:active {
     transform: scale(0.97);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 0.6875rem;
   }
 }
 

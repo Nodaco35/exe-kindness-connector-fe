@@ -233,8 +233,191 @@
   justify-content: flex-end;
 
   @media (max-width: 640px) {
-    gap: 0.375rem;
+    display: none; // hide desktop auth actions on mobile
   }
+}
+
+.desktopActions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.mobileActions {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+}
+
+.mobileMenuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.mobileMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mobileNavItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobileNavItem {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+  }
+}
+
+.mobileNavItemActive {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 700;
+}
+
+.mobileMenuDivider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+.mobileUserActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobileUserInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+}
+
+.mobileAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mobileActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  color: white;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.mobilePostButton {
+  background-color: white;
+  color: var(--secondary);
+  justify-content: center;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.mobileLogoutButton {
+  color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.1);
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+}
+
+.mobileUnreadBadge {
+  background-color: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: auto;
+}
+
+.mobileAuthActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobileLoginButton, .mobileRegisterButton {
+  display: block;
+  text-align: center;
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+}
+
+.mobileLoginButton {
+  background-color: white;
+  color: var(--secondary);
+}
+
+.mobileRegisterButton {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .divider {

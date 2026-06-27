@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -45,6 +45,7 @@ export default function Header() {
   const [points, setPoints] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [auth, setAuth] = useState<StoredAuth | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
@@ -165,8 +166,11 @@ export default function Header() {
   const handleLogout = () => {
     clearAuthState();
     window.dispatchEvent(new Event("auth-updated"));
+    setIsMobileMenuOpen(false);
     router.push("/login");
   };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const isChatRoom = pathname.startsWith("/chat/") && pathname !== "/chat";
   const isAuthPage = ["/login", "/register", "/forgot-password"].includes(pathname);
@@ -242,13 +246,76 @@ export default function Header() {
         </div>
 
         <div className={styles.rightSection}>
-          {auth?.isLoggedIn ? (
-            <>
-              <div className={styles.pointsPill} onClick={() => router.push("/rewards")}>
-                <span>🪙</span>
-                <span>{points} pts</span>
-              </div>
+          <div className={styles.desktopActions}>
+            {auth?.isLoggedIn ? (
+              <>
+                <div className={styles.pointsPill} onClick={() => router.push("/rewards")}>
+                  <span>🪙</span>
+                  <span>{points} pts</span>
+                </div>
 
+                <Link
+                  href="/requests"
+                  onClick={() => {
+                    if (unreadNotificationCount > 0 && auth) {
+                      axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                        .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
+                        .catch(console.error);
+                    }
+                  }}
+                  className={`${styles.chatIcon} ${pathname.startsWith("/requests") ? styles.chatIconActive : ""}`}
+                  title="Quản lý lượt xin"
+                >
+                  <Bell size={18} />
+                  {unreadNotificationCount > 0 && <span className={styles.chatBadge} />}
+                </Link>
+
+                <Link
+                  href="/chat"
+                  className={`${styles.chatIcon} ${pathname.startsWith("/chat") ? styles.chatIconActive : ""}`}
+                  title="Tin nhắn"
+                >
+                  <MessageCircle size={18} />
+                  {unreadChatCount > 0 && (
+                    <span className={styles.chatCountBadge}>{unreadChatCount}</span>
+                  )}
+                </Link>
+
+                <Link href="/post" className={styles.postButton}>
+                  <Plus size={14} />
+                  <span>Đăng sách</span>
+                </Link>
+
+                <div className={styles.divider} />
+
+                <div className={styles.profileSection}>
+                  <Link href="/profile" className={styles.avatar}>
+                    <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
+                    {isPremium && (
+                      <div className={styles.premiumBadge}>
+                        <Crown size={10} strokeWidth={3} />
+                      </div>
+                    )}
+                  </Link>
+                  <button onClick={handleLogout} title="Đăng xuất" className={styles.logoutButton}>
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className={styles.authActions}>
+                <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`} className={styles.loginButton}>
+                  Đăng nhập để trao đổi
+                </Link>
+                <Link href="/register" className={styles.registerButton}>
+                  Đăng ký ngay
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          <div className={styles.mobileActions}>
+            {auth?.isLoggedIn && (
               <Link
                 href="/requests"
                 onClick={() => {
@@ -264,51 +331,82 @@ export default function Header() {
                 <Bell size={18} />
                 {unreadNotificationCount > 0 && <span className={styles.chatBadge} />}
               </Link>
+            )}
+            
+            <button 
+              className={styles.mobileMenuBtn} 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </div>
 
-              <Link
-                href="/chat"
-                className={`${styles.chatIcon} ${pathname.startsWith("/chat") ? styles.chatIconActive : ""}`}
-                title="Tin nhắn"
-              >
-                <MessageCircle size={18} />
-                {unreadChatCount > 0 && (
-                  <span className={styles.chatCountBadge}>{unreadChatCount}</span>
-                )}
-              </Link>
-
-              <Link href="/post" className={styles.postButton}>
-                <Plus size={14} />
-                <span>Đăng sách</span>
-              </Link>
-
-              <div className={styles.divider} />
-
-              <div className={styles.profileSection}>
-                <Link href="/profile" className={styles.avatar}>
-                  <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
-                  {isPremium && (
-                    <div className={styles.premiumBadge}>
-                      <Crown size={10} strokeWidth={3} />
-                    </div>
-                  )}
+      {/* Mobile Menu Sidebar/Dropdown */}
+      {isMobileMenuOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className={styles.mobileMenu}
+        >
+          <div className={styles.mobileNavItems}>
+            {navItems.map((item) => {
+              const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path));
+              return (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  onClick={closeMobileMenu}
+                  className={`${styles.mobileNavItem} ${isActive ? styles.mobileNavItemActive : ""}`}
+                >
+                  {item.name}
                 </Link>
-                <button onClick={handleLogout} title="Đăng xuất" className={styles.logoutButton}>
-                  <LogOut size={16} />
-                </button>
+              );
+            })}
+          </div>
+
+          <div className={styles.mobileMenuDivider} />
+
+          {auth?.isLoggedIn ? (
+            <div className={styles.mobileUserActions}>
+              <div className={styles.mobileUserInfo}>
+                <Link href="/profile" className={styles.mobileAvatar} onClick={closeMobileMenu}>
+                  <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
+                </Link>
+                <div className={styles.pointsPill} onClick={() => { router.push("/rewards"); closeMobileMenu(); }}>
+                  <span>🪙</span>
+                  <span>{points} pts</span>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className={styles.authActions}>
-              <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`} className={styles.loginButton}>
-                Đăng nhập để trao đổi
+
+              <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton}`}>
+                <Plus size={16} /> Đăng sách mới
               </Link>
-              <Link href="/register" className={styles.registerButton}>
+
+              <Link href="/chat" onClick={closeMobileMenu} className={styles.mobileActionButton}>
+                <MessageCircle size={16} /> Tin nhắn 
+                {unreadChatCount > 0 && <span className={styles.mobileUnreadBadge}>{unreadChatCount}</span>}
+              </Link>
+
+              <button onClick={handleLogout} className={`${styles.mobileActionButton} ${styles.mobileLogoutButton}`}>
+                <LogOut size={16} /> Đăng xuất
+              </button>
+            </div>
+          ) : (
+            <div className={styles.mobileAuthActions}>
+              <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`} onClick={closeMobileMenu} className={styles.mobileLoginButton}>
+                Đăng nhập
+              </Link>
+              <Link href="/register" onClick={closeMobileMenu} className={styles.mobileRegisterButton}>
                 Đăng ký ngay
               </Link>
             </div>
           )}
-        </div>
-      </div>
+        </motion.div>
+      )}
     </header>
   );
 }
