@@ -2,7 +2,8 @@
 
 import { API_URL } from "@/config/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { BookOpen, MapPin, Upload, Search, X, Image as ImageIcon } from "lucide-react";
 import axios from "axios";
 import bookCategories from "../../book_categories.json";
@@ -10,8 +11,11 @@ import styles from "./page.module.scss";
 import CustomSelect from "@/components/CustomSelect";
 import BarcodeScanner from "@/components/BarcodeScanner";
 
-export default function PostBook() {
+function PostBookContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  
   const [loading, setLoading] = useState(false);
   const [fetchingInfo, setFetchingInfo] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -61,6 +65,34 @@ export default function PostBook() {
     
     fetchUserLocation();
   }, []);
+
+  useEffect(() => {
+    if (editId) {
+      const fetchBookForEdit = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/book/${editId}`);
+          const book = res.data;
+          setFormData({
+            title: book.title || "",
+            author: book.author || "",
+            description: book.description || "",
+            codition: book.codition || "",
+            images: book.images || [],
+            category: book.categories?.[0] || "",
+            advancedCategory: book.advancedCategories?.[0] || "",
+            location: {
+              district: book.location?.district || "Cầu Giấy",
+              city: book.location?.city || "Hà Nội"
+            }
+          });
+        } catch (err) {
+          console.error("Lỗi khi tải thông tin sách sửa:", err);
+          setError("Không thể tải thông tin sách cần sửa.");
+        }
+      };
+      fetchBookForEdit();
+    }
+  }, [editId]);
 
   const activeCategoryGroup = bookCategories.find(c => c.slug === formData.category);
 
@@ -200,26 +232,34 @@ export default function PostBook() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       if (!authStr) {
-        throw new Error("Bạn cần đăng nhập để đăng sách!");
+        throw new Error("Bạn cần đăng nhập để thực hiện thao tác này!");
       }
       const auth = JSON.parse(authStr);
 
-      const payload = {
+      const payload: any = {
         ...formData,
         categories: formData.category ? [formData.category] : [],
         advancedCategories: formData.advancedCategory ? [formData.advancedCategory] : [],
         images: formData.images,
-        status: "AVAILABLE",
-        viewCount: 0
       };
 
-      await axios.post(`${API_URL}/book`, payload, {
-        headers: {
-          Authorization: `Bearer ${auth.token}`
-        }
-      });
-
-      router.push("/");
+      if (editId) {
+        // Cập nhật sách
+        await axios.patch(`${API_URL}/book/${editId}`, payload, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        alert("Cập nhật thông tin sách thành công!");
+        router.push("/my-books");
+      } else {
+        // Đăng sách mới
+        payload.status = "AVAILABLE";
+        payload.viewCount = 0;
+        await axios.post(`${API_URL}/book`, payload, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        alert("Đăng sách mới thành công!");
+        router.push("/my-books");
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Đã xảy ra lỗi");
     } finally {
@@ -234,8 +274,8 @@ export default function PostBook() {
           <div className={styles.iconWrapper}>
             <BookOpen size={24} />
           </div>
-          <h1 className={styles.title}>Đăng sách trao đổi</h1>
-          <p className={styles.subtitle}>Chia sẻ tri thức với cộng đồng</p>
+          <h1 className={styles.title}>{editId ? "Chỉnh sửa sách" : "Đăng sách trao đổi"}</h1>
+          <p className={styles.subtitle}>{editId ? "Cập nhật các thông tin chi tiết cho cuốn sách của bạn" : "Chia sẻ tri thức với cộng đồng"}</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
@@ -452,12 +492,20 @@ export default function PostBook() {
           <button type="submit" disabled={loading} className={styles.submitButton}>
             {loading ? "Đang xử lý..." : (
               <>
-                <Upload size={18} /> Đăng sách ngay
+                <Upload size={18} /> {editId ? "Lưu thay đổi" : "Đăng sách ngay"}
               </>
             )}
           </button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function PostBook() {
+  return (
+    <Suspense fallback={<div className={styles.container}><div className={styles.loading}>Đang tải biểu mẫu...</div></div>}>
+      <PostBookContent />
+    </Suspense>
   );
 }
