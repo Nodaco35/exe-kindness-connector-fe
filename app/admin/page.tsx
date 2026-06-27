@@ -44,6 +44,10 @@ export default function AdminDashboard() {
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
   const [searchQuery, setSearchQuery] = useState("");
+  const [usersPage, setUsersPage] = useState(1);
+  const [booksPage, setBooksPage] = useState(1);
+  const [membershipsPage, setMembershipsPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   const [editingBook, setEditingBook] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -190,7 +194,16 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setSearchQuery("");
+    setUsersPage(1);
+    setBooksPage(1);
+    setMembershipsPage(1);
   }, [activeTab]);
+
+  useEffect(() => {
+    setUsersPage(1);
+    setBooksPage(1);
+    setMembershipsPage(1);
+  }, [searchQuery]);
 
   const filteredUsers = users.filter(user => 
     user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,6 +221,34 @@ export default function AdminDashboard() {
     m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.transactionId?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const renderPagination = (currentPage: number, totalPages: number, onPageChange: (page: number) => void) => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className={styles.pagination}>
+        <button
+          type="button"
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+          className={styles.pageBtn}
+        >
+          Trang trước
+        </button>
+        <span className={styles.pageInfo}>
+          Trang <strong>{currentPage}</strong> / {totalPages}
+        </span>
+        <button
+          type="button"
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+          className={styles.pageBtn}
+        >
+          Trang sau
+        </button>
+      </div>
+    );
+  };
 
   const fetchAdminData = async () => {
     try {
@@ -418,152 +459,161 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "USERS" && (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map(user => (
-                    <tr key={user._id}>
-                      <td>{user.fullName}</td>
-                      <td>{user.email}</td>
-                      <td><span className={styles.badge}>{user.role}</span></td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${styles[user.status]}`}>
-                          {USER_STATUS_MAP[user.status] || user.status}
-                        </span>
-                      </td>
-                      <td>
-                        {user.status === "ACTIVE" ? (
-                          <button onClick={() => handleUpdateUserStatus(user._id, "LOCKED")} className={styles.actionBtnLock}>
-                            <Ban size={14} /> Khóa
-                          </button>
-                        ) : (
-                          <button onClick={() => handleUpdateUserStatus(user._id, "ACTIVE")} className={styles.actionBtnUnlock}>
-                            <CheckCircle size={14} /> Mở khóa
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredUsers.length === 0 && (
+            <>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
                     <tr>
-                      <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
-                        Không tìm thấy người dùng nào phù hợp.
-                      </td>
+                      <th>Tên</th>
+                      <th>Email</th>
+                      <th>Vai trò</th>
+                      <th>Trạng thái</th>
+                      <th>Hành động</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE).map(user => (
+                      <tr key={user._id}>
+                        <td>{user.fullName}</td>
+                        <td>{user.email}</td>
+                        <td><span className={styles.badge}>{user.role}</span></td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${styles[user.status]}`}>
+                            {USER_STATUS_MAP[user.status] || user.status}
+                          </span>
+                        </td>
+                        <td>
+                          {user.status === "ACTIVE" ? (
+                            <button onClick={() => handleUpdateUserStatus(user._id, "LOCKED")} className={styles.actionBtnLock}>
+                              <Ban size={14} /> Khóa
+                            </button>
+                          ) : (
+                            <button onClick={() => handleUpdateUserStatus(user._id, "ACTIVE")} className={styles.actionBtnUnlock}>
+                              <CheckCircle size={14} /> Mở khóa
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                          Không tìm thấy người dùng nào phù hợp.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(usersPage, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE), setUsersPage)}
+            </>
           )}
 
           {activeTab === "BOOKS" && (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên Sách</th>
-                    <th>Người đăng</th>
-                    <th>Tình trạng</th>
-                    <th>Trạng thái hiển thị</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBooks.map(book => (
-                    <tr key={book._id}>
-                      <td style={{ fontWeight: 600 }}>{book.title}</td>
-                      <td>{book.owner?.email || 'N/A'}</td>
-                      <td>
-                        <span className={`${styles.conditionBadge} ${styles[book.codition]}`}>
-                          {BOOK_CONDITION_MAP[book.codition] || book.codition}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${styles[book.status]}`}>
-                          {BOOK_STATUS_MAP[book.status] || book.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <button onClick={() => handleOpenEditModal(book)} className={styles.actionBtnEdit}>
-                            <Pencil size={14} /> Sửa
-                          </button>
-                          {book.status !== "HIDDEN" ? (
-                            <button onClick={() => handleUpdateBookStatus(book._id, "HIDDEN")} className={styles.actionBtnLock}>
-                              <Ban size={14} /> Ẩn sách
-                            </button>
-                          ) : (
-                            <button onClick={() => handleUpdateBookStatus(book._id, "AVAILABLE")} className={styles.actionBtnUnlock}>
-                              <CheckCircle size={14} /> Hiện sách
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredBooks.length === 0 && (
+            <>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
                     <tr>
-                      <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
-                        Không tìm thấy cuốn sách nào phù hợp.
-                      </td>
+                      <th>Tên Sách</th>
+                      <th>Người đăng</th>
+                      <th>Tình trạng</th>
+                      <th>Trạng thái hiển thị</th>
+                      <th>Hành động</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredBooks.slice((booksPage - 1) * ITEMS_PER_PAGE, booksPage * ITEMS_PER_PAGE).map(book => (
+                      <tr key={book._id}>
+                        <td style={{ fontWeight: 600 }}>{book.title}</td>
+                        <td>{book.owner?.email || 'N/A'}</td>
+                        <td>
+                          <span className={`${styles.conditionBadge} ${styles[book.codition]}`}>
+                            {BOOK_CONDITION_MAP[book.codition] || book.codition}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${styles[book.status]}`}>
+                            {BOOK_STATUS_MAP[book.status] || book.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button onClick={() => handleOpenEditModal(book)} className={styles.actionBtnEdit}>
+                              <Pencil size={14} /> Sửa
+                            </button>
+                            {book.status !== "HIDDEN" ? (
+                              <button onClick={() => handleUpdateBookStatus(book._id, "HIDDEN")} className={styles.actionBtnLock}>
+                                <Ban size={14} /> Ẩn sách
+                              </button>
+                            ) : (
+                              <button onClick={() => handleUpdateBookStatus(book._id, "AVAILABLE")} className={styles.actionBtnUnlock}>
+                                <CheckCircle size={14} /> Hiện sách
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredBooks.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                          Không tìm thấy cuốn sách nào phù hợp.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(booksPage, Math.ceil(filteredBooks.length / ITEMS_PER_PAGE), setBooksPage)}
+            </>
           )}
 
           {activeTab === "MEMBERSHIPS" && (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên Người dùng</th>
-                    <th>Email</th>
-                    <th>Số tiền nạp</th>
-                    <th>Mã giao dịch</th>
-                    <th>Phương thức</th>
-                    <th>Ngày bắt đầu</th>
-                    <th>Ngày hết hạn</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMemberships.map((m: any) => (
-                    <tr key={m._id}>
-                      <td>{m.user?.fullName || 'N/A'}</td>
-                      <td>{m.user?.email || 'N/A'}</td>
-                      <td style={{ fontWeight: 600, color: "#10B981" }}>{(m.amount || 0).toLocaleString('vi-VN')} đ</td>
-                      <td><code style={{ background: "rgba(0,0,0,0.05)", padding: "0.2rem 0.4rem", borderRadius: "0.25rem", fontSize: "0.85rem" }}>{m.transactionId || 'N/A'}</code></td>
-                      <td><span className={styles.badge}>{m.method}</span></td>
-                      <td>{new Date(m.startDate).toLocaleDateString('vi-VN')}</td>
-                      <td>{new Date(m.endDate).toLocaleDateString('vi-VN')}</td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${m.status === 'ACTIVE' ? styles.AVAILABLE : styles.HIDDEN}`}>
-                          {MEMBERSHIP_STATUS_MAP[m.status] || m.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredMemberships.length === 0 && (
+            <>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
                     <tr>
-                      <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
-                        Không tìm thấy giao dịch nào phù hợp.
-                      </td>
+                      <th>Tên Người dùng</th>
+                      <th>Email</th>
+                      <th>Số tiền nạp</th>
+                      <th>Mã giao dịch</th>
+                      <th>Phương thức</th>
+                      <th>Ngày bắt đầu</th>
+                      <th>Ngày hết hạn</th>
+                      <th>Trạng thái</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredMemberships.slice((membershipsPage - 1) * ITEMS_PER_PAGE, membershipsPage * ITEMS_PER_PAGE).map((m: any) => (
+                      <tr key={m._id}>
+                        <td>{m.user?.fullName || 'N/A'}</td>
+                        <td>{m.user?.email || 'N/A'}</td>
+                        <td style={{ fontWeight: 600, color: "#10B981" }}>{(m.amount || 0).toLocaleString('vi-VN')} đ</td>
+                        <td><code style={{ background: "rgba(0,0,0,0.05)", padding: "0.2rem 0.4rem", borderRadius: "0.25rem", fontSize: "0.85rem" }}>{m.transactionId || 'N/A'}</code></td>
+                        <td><span className={styles.badge}>{m.method}</span></td>
+                        <td>{new Date(m.startDate).toLocaleDateString('vi-VN')}</td>
+                        <td>{new Date(m.endDate).toLocaleDateString('vi-VN')}</td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${m.status === 'ACTIVE' ? styles.AVAILABLE : styles.HIDDEN}`}>
+                            {MEMBERSHIP_STATUS_MAP[m.status] || m.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredMemberships.length === 0 && (
+                      <tr>
+                        <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                          Không tìm thấy giao dịch nào phù hợp.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(membershipsPage, Math.ceil(filteredMemberships.length / ITEMS_PER_PAGE), setMembershipsPage)}
+            </>
           )}
 
           {activeTab === "PROFILE" && adminProfile && (
