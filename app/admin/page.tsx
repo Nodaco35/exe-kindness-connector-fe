@@ -3,11 +3,35 @@
 import { API_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard } from "lucide-react";
+import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard, TrendingUp } from "lucide-react";
 import axios from "axios";
 import styles from "./page.module.scss";
 import CustomSelect from "@/components/CustomSelect";
 import bookCategories from "../../book_categories.json";
+
+const USER_STATUS_MAP: Record<string, string> = {
+  ACTIVE: "Hoạt động",
+  LOCKED: "Bị khóa",
+};
+
+const BOOK_CONDITION_MAP: Record<string, string> = {
+  NEW: "Mới",
+  LIKE_NEW: "Như mới",
+  USED: "Đã sử dụng",
+};
+
+const BOOK_STATUS_MAP: Record<string, string> = {
+  AVAILABLE: "Sẵn có",
+  REQUESTED: "Đang yêu cầu",
+  EXCHANGED: "Đã trao đổi",
+  HIDDEN: "Đã ẩn",
+};
+
+const MEMBERSHIP_STATUS_MAP: Record<string, string> = {
+  ACTIVE: "Hoạt động",
+  EXPIRED: "Hết hạn",
+  CANCELED: "Đã hủy",
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -19,6 +43,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [editingBook, setEditingBook] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -163,6 +188,27 @@ export default function AdminDashboard() {
     fetchAdminData();
   }, []);
 
+  useEffect(() => {
+    setSearchQuery("");
+  }, [activeTab]);
+
+  const filteredUsers = users.filter(user => 
+    user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredBooks = books.filter(book => 
+    book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.owner?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.owner?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredMemberships = memberships.filter(m => 
+    m.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.transactionId?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const fetchAdminData = async () => {
     try {
       setLoading(true);
@@ -306,26 +352,71 @@ export default function AdminDashboard() {
             {activeTab === "PROFILE" && "Trang Cá Nhân"}
           </h1>
           <div className={styles.stats}>
-            <div className={styles.statCard}>
-              <span>Tổng Users</span>
-              <strong>{stats.totalUsers}</strong>
+            <div className={`${styles.statCard} ${styles.usersCard}`}>
+              <div className={styles.statIconWrapper}>
+                <Users size={20} />
+              </div>
+              <div className={styles.statText}>
+                <span>Tổng Users</span>
+                <strong>{stats.totalUsers}</strong>
+              </div>
             </div>
-            <div className={styles.statCard}>
-              <span>Tổng Sách</span>
-              <strong>{stats.totalBooks}</strong>
+            <div className={`${styles.statCard} ${styles.booksCard}`}>
+              <div className={styles.statIconWrapper}>
+                <BookOpen size={20} />
+              </div>
+              <div className={styles.statText}>
+                <span>Tổng Sách</span>
+                <strong>{stats.totalBooks}</strong>
+              </div>
             </div>
-            <div className={styles.statCard}>
-              <span>Tổng Premium</span>
-              <strong>{stats.totalPremiumUsers || 0}</strong>
+            <div className={`${styles.statCard} ${styles.premiumCard}`}>
+              <div className={styles.statIconWrapper}>
+                <CreditCard size={20} />
+              </div>
+              <div className={styles.statText}>
+                <span>Tổng Premium</span>
+                <strong>{stats.totalPremiumUsers || 0}</strong>
+              </div>
             </div>
-            <div className={styles.statCard}>
-              <span>Tổng Doanh Thu</span>
-              <strong style={{ color: "#10B981" }}>{(stats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+            <div className={`${styles.statCard} ${styles.revenueCard}`}>
+              <div className={styles.statIconWrapper}>
+                <TrendingUp size={20} />
+              </div>
+              <div className={styles.statText}>
+                <span>Tổng Doanh Thu</span>
+                <strong>{(stats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+              </div>
             </div>
           </div>
         </div>
 
         <div className={styles.content}>
+          {activeTab !== "PROFILE" && (
+            <div className={styles.tableHeaderActions}>
+              <div className={styles.searchWrapper}>
+                <Search size={18} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder={
+                    activeTab === "USERS" ? "Tìm người dùng theo tên hoặc email..." :
+                    activeTab === "BOOKS" ? "Tìm sách theo tiêu đề hoặc người đăng..." :
+                    activeTab === "MEMBERSHIPS" ? "Tìm theo tên, email hoặc mã giao dịch..." :
+                    "Tìm kiếm..."
+                  }
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className={styles.clearSearchBtn}>
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === "USERS" && (
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
@@ -339,14 +430,14 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map(user => (
+                  {filteredUsers.map(user => (
                     <tr key={user._id}>
                       <td>{user.fullName}</td>
                       <td>{user.email}</td>
                       <td><span className={styles.badge}>{user.role}</span></td>
                       <td>
                         <span className={`${styles.statusBadge} ${styles[user.status]}`}>
-                          {user.status}
+                          {USER_STATUS_MAP[user.status] || user.status}
                         </span>
                       </td>
                       <td>
@@ -362,6 +453,13 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                  {filteredUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                        Không tìm thấy người dùng nào phù hợp.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -380,14 +478,18 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {books.map(book => (
+                  {filteredBooks.map(book => (
                     <tr key={book._id}>
-                      <td>{book.title}</td>
+                      <td style={{ fontWeight: 600 }}>{book.title}</td>
                       <td>{book.owner?.email || 'N/A'}</td>
-                      <td>{book.codition}</td>
+                      <td>
+                        <span className={`${styles.conditionBadge} ${styles[book.codition]}`}>
+                          {BOOK_CONDITION_MAP[book.codition] || book.codition}
+                        </span>
+                      </td>
                       <td>
                         <span className={`${styles.statusBadge} ${styles[book.status]}`}>
-                          {book.status}
+                          {BOOK_STATUS_MAP[book.status] || book.status}
                         </span>
                       </td>
                       <td>
@@ -408,6 +510,13 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                  {filteredBooks.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                        Không tìm thấy cuốn sách nào phù hợp.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -429,7 +538,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {memberships.map((m: any) => (
+                  {filteredMemberships.map((m: any) => (
                     <tr key={m._id}>
                       <td>{m.user?.fullName || 'N/A'}</td>
                       <td>{m.user?.email || 'N/A'}</td>
@@ -440,15 +549,15 @@ export default function AdminDashboard() {
                       <td>{new Date(m.endDate).toLocaleDateString('vi-VN')}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${m.status === 'ACTIVE' ? styles.AVAILABLE : styles.HIDDEN}`}>
-                          {m.status}
+                          {MEMBERSHIP_STATUS_MAP[m.status] || m.status}
                         </span>
                       </td>
                     </tr>
                   ))}
-                  {memberships.length === 0 && (
+                  {filteredMemberships.length === 0 && (
                     <tr>
                       <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
-                        Chưa có giao dịch nạp tiền Premium nào.
+                        Không tìm thấy giao dịch nào phù hợp.
                       </td>
                     </tr>
                   )}
