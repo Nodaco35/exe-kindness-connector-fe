@@ -46,7 +46,9 @@ export default function Login() {
         router.push(callbackUrl);
       }
     } catch (err: any) {
-      if (err.response?.status === 401) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.status === 401) {
         setError("Email hoặc mật khẩu không chính xác.");
       } else {
         setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
