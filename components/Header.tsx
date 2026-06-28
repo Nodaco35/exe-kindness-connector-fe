@@ -249,10 +249,21 @@ export default function Header() {
           <div className={styles.desktopActions}>
             {auth?.isLoggedIn ? (
               <>
-                <div className={styles.pointsPill} onClick={() => router.push("/rewards")}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
+                <Link
+                  href="/rewards"
+                  className={`${styles.unifiedMembershipButton} ${isPremium ? styles.premiumActive : ""} ${pathname === "/rewards" ? styles.active : ""}`}
+                  title="Membership & Điểm"
+                >
+                  <div className={styles.ptsPart}>
+                    <span>🪙</span>
+                    <span>{points} pts</span>
+                  </div>
+                  <div className={styles.dividerLine} />
+                  <div className={styles.proPart}>
+                    <Crown size={14} className={styles.crownIcon} />
+                    <span>{isPremium ? "PRO Active" : "Gói PRO"}</span>
+                  </div>
+                </Link>
 
                 <Link
                   href="/requests"
@@ -384,11 +395,16 @@ export default function Header() {
                 <Link href="/profile" className={styles.mobileAvatar} onClick={closeMobileMenu}>
                   <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
                 </Link>
-                <div className={styles.pointsPill} onClick={() => { router.push("/rewards"); closeMobileMenu(); }}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
               </div>
+
+              <Link href="/rewards" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobileUnifiedButton} ${isPremium ? styles.mobilePremiumActive : ""}`}>
+                <span className={styles.mobilePtsPart}>🪙 {points} pts</span>
+                <span className={styles.mobileDivider}>•</span>
+                <span className={styles.mobileProPart}>
+                  <Crown size={14} className={styles.mobileCrownIcon} />
+                  <span>{isPremium ? "Tài khoản PRO" : "Đăng ký PRO"}</span>
+                </span>
+              </Link>
 
               <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton}`}>
                 <Plus size={16} /> Đăng sách mới
