@@ -141,6 +141,83 @@
   }
 }
 
+.unifiedMembershipButton {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  white-space: nowrap;
+
+  .ptsPart, .proPart {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.725rem;
+    font-weight: 800;
+  }
+
+  .ptsPart {
+    color: #fbbf24; // Amber color for points
+  }
+
+  .proPart {
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+
+    .crownIcon {
+      color: #ffd700;
+      filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+      animation: bounceCrown 3s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+  }
+
+  .dividerLine {
+    width: 1px;
+    height: 1rem;
+    background-color: rgba(255, 255, 255, 0.25);
+    align-self: center;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(0, 168, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 168, 255, 0.25);
+  }
+
+  &.premiumActive {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.08);
+
+    .proPart {
+      color: #fbbf24;
+    }
+
+    &:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.7);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+    }
+  }
+
+  &.active {
+    outline: 2px solid white;
+    outline-offset: 1px;
+  }
+}
+
+@keyframes bounceCrown {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(8deg); }
+}
+
 .chatIcon {
   position: relative;
   padding: 0.5rem;
@@ -373,6 +450,57 @@
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.mobileUnifiedButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  .mobilePtsPart {
+    color: #fbbf24;
+    font-weight: 700;
+  }
+
+  .mobileDivider {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .mobileProPart {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-weight: 700;
+
+    .mobileCrownIcon {
+      color: #ffd700;
+      flex-shrink: 0;
+    }
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 168, 255, 0.4);
+  }
+
+  &.mobilePremiumActive {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.3);
+
+    .mobileProPart {
+      color: #fbbf24;
+    }
+
+    &:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.6);
+    }
   }
 }
 
