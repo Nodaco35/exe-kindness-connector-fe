@@ -57,6 +57,7 @@ export default function AdminDashboard() {
   const [booksPage, setBooksPage] = useState(1);
   const [membershipsPage, setMembershipsPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+  const USERS_PER_PAGE = 10;
 
   const [editingBook, setEditingBook] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -623,7 +624,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE).map(user => (
+                    {filteredUsers.slice((usersPage - 1) * USERS_PER_PAGE, usersPage * USERS_PER_PAGE).map(user => (
                       <tr key={user._id}>
                         <td>{user.fullName}</td>
                         <td>{user.email}</td>
@@ -656,7 +657,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-              {renderPagination(usersPage, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE), setUsersPage)}
+              {renderPagination(usersPage, Math.ceil(filteredUsers.length / USERS_PER_PAGE), setUsersPage)}
             </>
           )}
 
