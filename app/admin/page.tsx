@@ -35,11 +35,20 @@ const MEMBERSHIP_STATUS_MAP: Record<string, string> = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState({ totalUsers: 0, totalBooks: 0, totalPremiumUsers: 0, totalRevenue: 0 });
+  const [stats, setStats] = useState<any>({
+    totalUsers: 0,
+    totalBooks: 0,
+    totalPremiumUsers: 0,
+    totalRevenue: 0,
+    userStatus: { active: 0, locked: 0 },
+    bookStatus: { available: 0, requested: 0, exchanged: 0, hidden: 0 },
+    topViewedBooks: [],
+    categoryBreakdown: []
+  });
   const [users, setUsers] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("USERS");
+  const [activeTab, setActiveTab] = useState("DASHBOARD");
   const [loading, setLoading] = useState(true);
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
@@ -353,6 +362,12 @@ export default function AdminDashboard() {
         </div>
         <nav className={styles.nav}>
           <button 
+            className={`${styles.navItem} ${activeTab === "DASHBOARD" ? styles.active : ""}`}
+            onClick={() => setActiveTab("DASHBOARD")}
+          >
+            <TrendingUp size={18} /> Tổng Quan Hệ Thống
+          </button>
+          <button 
             className={`${styles.navItem} ${activeTab === "USERS" ? styles.active : ""}`}
             onClick={() => setActiveTab("USERS")}
           >
@@ -433,7 +448,143 @@ export default function AdminDashboard() {
         </div>
 
         <div className={styles.content}>
-          {activeTab !== "PROFILE" && (
+          {activeTab === "DASHBOARD" && (
+            <div className={styles.dashboardGrid}>
+              {/* Row 1: Left Card (Book Status) & Right Card (User Status) */}
+              <div className={styles.dashboardRow}>
+                <div className={styles.dashboardCard}>
+                  <h3>Trạng Thái Sách</h3>
+                  <div className={styles.metricList}>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Sách sẵn có</span>
+                        <strong>{stats.bookStatus?.available || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.availableBar}`} style={{ width: `${(stats.bookStatus?.available / (stats.totalBooks || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Đang được yêu cầu</span>
+                        <strong>{stats.bookStatus?.requested || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.requestedBar}`} style={{ width: `${(stats.bookStatus?.requested / (stats.totalBooks || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Đã trao đổi thành công</span>
+                        <strong>{stats.bookStatus?.exchanged || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.exchangedBar}`} style={{ width: `${(stats.bookStatus?.exchanged / (stats.totalBooks || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Đã ẩn</span>
+                        <strong>{stats.bookStatus?.hidden || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.hiddenBar}`} style={{ width: `${(stats.bookStatus?.hidden / (stats.totalBooks || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.dashboardCard}>
+                  <h3>Trạng Thái Người Dùng</h3>
+                  <div className={styles.metricList}>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Người dùng hoạt động</span>
+                        <strong>{stats.userStatus?.active || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.availableBar}`} style={{ width: `${(stats.userStatus?.active / (stats.totalUsers || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Người dùng bị khóa</span>
+                        <strong>{stats.userStatus?.locked || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.hiddenBar}`} style={{ width: `${(stats.userStatus?.locked / (stats.totalUsers || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 style={{ marginTop: '2rem' }}>Thành Viên Premium</h3>
+                  <div className={styles.metricList}>
+                    <div className={styles.metricItem}>
+                      <div className={styles.metricHeader}>
+                        <span>Tỷ lệ Premium</span>
+                        <strong>{stats.totalPremiumUsers || 0} / {stats.totalUsers || 0}</strong>
+                      </div>
+                      <div className={styles.progressBarWrapper}>
+                        <div className={`${styles.progressBar} ${styles.premiumBar}`} style={{ width: `${(stats.totalPremiumUsers / (stats.totalUsers || 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Left Card (Top Categories) & Right Card (Top Viewed Books) */}
+              <div className={styles.dashboardRow}>
+                <div className={styles.dashboardCard}>
+                  <h3>Thể Loại Sách Phổ Biến</h3>
+                  <div className={styles.categoryList}>
+                    {stats.categoryBreakdown && stats.categoryBreakdown.length > 0 ? (
+                      stats.categoryBreakdown.map((cat: any, idx: number) => {
+                        const total = stats.categoryBreakdown[0]?.count || 1;
+                        return (
+                          <div key={idx} className={styles.categoryItem}>
+                            <div className={styles.categoryHeader}>
+                              <span>{cat._id}</span>
+                              <strong>{cat.count} cuốn</strong>
+                            </div>
+                            <div className={styles.progressBarWrapper}>
+                              <div className={`${styles.progressBar} ${styles.categoryBar}`} style={{ width: `${(cat.count / total) * 100}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Chưa có dữ liệu thống kê thể loại.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.dashboardCard}>
+                  <h3>Bài Đăng Xem Nhiều Nhất</h3>
+                  <div className={styles.topBooksList}>
+                    {stats.topViewedBooks && stats.topViewedBooks.length > 0 ? (
+                      stats.topViewedBooks.map((book: any, idx: number) => (
+                        <div key={idx} className={styles.topBookItem}>
+                          <div className={styles.topBookRank}>{idx + 1}</div>
+                          <div className={styles.topBookInfo}>
+                            <h4>{book.title}</h4>
+                            <span>Người đăng: {book.owner?.fullName || book.owner?.email || 'N/A'}</span>
+                          </div>
+                          <div className={styles.topBookViews}>
+                            <strong>{book.viewCount || 0}</strong>
+                            <span>lượt xem</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Chưa có dữ liệu lượt xem sách.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== "PROFILE" && activeTab !== "DASHBOARD" && (
             <div className={styles.tableHeaderActions}>
               <div className={styles.searchWrapper}>
                 <Search size={18} className={styles.searchIcon} />
