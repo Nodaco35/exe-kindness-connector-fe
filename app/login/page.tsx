@@ -35,7 +35,7 @@ export default function Login() {
             id: response.data.user._id,
             email: response.data.user.email,
             role: response.data.user.role,
-            avatar: response.data.user.avatar || "https://i.pravatar.cc/150?u=99",
+            avatar: response.data.user.avatar || ("https://ui-avatars.com/api/?name=" + (response.data.user.fullName || response.data.user.email || "User")),
             token: response.data.access_token,
           })
         );

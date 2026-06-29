@@ -181,7 +181,7 @@ export default function Home() {
 
       const response = await axios.get(`${API_URL}/book?${params.toString()}`);
       if (response.data) {
-        setBooks(response.data);
+        setBooks([...response.data].reverse());
       }
     } catch (error) {
       console.error("Failed to fetch books:", error);

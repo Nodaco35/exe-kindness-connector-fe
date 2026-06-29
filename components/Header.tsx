@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -249,10 +249,21 @@ export default function Header() {
           <div className={styles.desktopActions}>
             {auth?.isLoggedIn ? (
               <>
-                <div className={styles.pointsPill} onClick={() => router.push("/rewards")}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
+                <Link
+                  href="/rewards"
+                  className={`${styles.unifiedMembershipButton} ${isPremium ? styles.premiumActive : ""} ${pathname === "/rewards" ? styles.active : ""}`}
+                  title="Membership & Điểm"
+                >
+                  <div className={styles.ptsPart}>
+                    <span>🪙</span>
+                    <span>{points} pts</span>
+                  </div>
+                  <div className={styles.dividerLine} />
+                  <div className={styles.proPart}>
+                    <Crown size={14} className={styles.crownIcon} />
+                    <span>{isPremium ? "PRO Active" : "Gói PRO"}</span>
+                  </div>
+                </Link>
 
                 <Link
                   href="/requests"
@@ -300,7 +311,13 @@ export default function Header() {
 
                 <div className={styles.profileSection}>
                   <Link href="/profile" className={styles.avatar}>
-                    <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
+                    {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
+                      <img src={auth.avatar} alt="Avatar" />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                        <User size={20} color="white" />
+                      </div>
+                    )}
                     {isPremium && (
                       <div className={styles.premiumBadge}>
                         <Crown size={10} strokeWidth={3} />
@@ -384,16 +401,27 @@ export default function Header() {
             <div className={styles.mobileUserActions}>
               <div className={styles.mobileUserInfo}>
                 <Link href="/profile" className={styles.mobileAvatar} onClick={closeMobileMenu}>
-                  <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
+                  {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
+                    <img src={auth.avatar} alt="Avatar" />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                      <User size={20} color="white" />
+                    </div>
+                  )}
                 </Link>
-                <div className={styles.pointsPill} onClick={() => { router.push("/rewards"); closeMobileMenu(); }}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
               </div>
 
-              <Link href="/post" onClick={closeMobileMenu} className={styles.btnSparkleMobile}>
-                <Sparkles size={16} className={styles.sparkleIcon} /> Đăng sách mới
+              <Link href="/rewards" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobileUnifiedButton} ${isPremium ? styles.mobilePremiumActive : ""}`}>
+                <span className={styles.mobilePtsPart}>🪙 {points} pts</span>
+                <span className={styles.mobileDivider}>•</span>
+                <span className={styles.mobileProPart}>
+                  <Crown size={14} className={styles.mobileCrownIcon} />
+                  <span>{isPremium ? "Tài khoản PRO" : "Đăng ký PRO"}</span>
+                </span>
+              </Link>
+
+              <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton} ${styles.btnSparkleMobile}`}>
+                <Plus size={16} /> Đăng sách mới
               </Link>
 
               <Link href="/chat" onClick={closeMobileMenu} className={styles.mobileActionButton}>

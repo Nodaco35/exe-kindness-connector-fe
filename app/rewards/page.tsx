@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck, X, Copy, Check } from "lucide-react";
+import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck, X, Copy, Check, Sparkles } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/config/api";
 import styles from "./page.module.scss";
@@ -162,12 +162,15 @@ export default function RewardsPage() {
   return (
     <div className={styles.container}>
       <div className={styles.heroSection}>
+        <div className={styles.heroGlow} />
+        <div className={styles.heroDotGrid} />
         <div className={styles.heroContent}>
           <h1 className={styles.title}>Đổi Điểm Thưởng</h1>
           <p className={styles.subtitle}>Tích lũy điểm khi chia sẻ sách để nhận các đặc quyền đặc biệt.</p>
 
           <div className={styles.pointsPill}>
-            <Star className={styles.pointsIcon} size={24} />
+            <div className={styles.pointsPillGlow} />
+            <Star className={styles.pointsIcon} size={28} />
             <span className={styles.pointsValue}>{points}</span>
             <span className={styles.pointsLabel}>Điểm hiện tại</span>
           </div>
@@ -179,40 +182,45 @@ export default function RewardsPage() {
           <div className={styles.rulesCard}>
             <h3>Cách tích lũy điểm</h3>
             <ul className={styles.rulesList}>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--success-bg)", color: "var(--success-text)" }}>
+              <li className={styles.ruleItem}>
+                <div className={`${styles.ruleIconWrapper} ${styles.ruleIconSuccess}`}>
                   <BookOpen size={20} />
                 </div>
                 <div className={styles.ruleInfo}>
                   <strong>Đăng sách mới</strong>
                   <p>Mỗi cuốn sách bạn đăng lên hệ thống.</p>
                 </div>
-                <span className={styles.rulePoints}>+10</span>
+                <span className={`${styles.rulePoints} ${styles.pointsSuccess}`}>+10</span>
               </li>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--primary-light-bg)", color: "var(--primary)" }}>
+              <li className={styles.ruleItem}>
+                <div className={`${styles.ruleIconWrapper} ${styles.ruleIconPrimary}`}>
                   <Gift size={20} />
                 </div>
                 <div className={styles.ruleInfo}>
                   <strong>Tặng sách thành công</strong>
                   <p>Khi bạn chấp nhận yêu cầu xin sách.</p>
                 </div>
-                <span className={styles.rulePoints}>+50</span>
+                <span className={`${styles.rulePoints} ${styles.pointsPrimary}`}>+50</span>
               </li>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--amber-bg)", color: "var(--amber-text)" }}>
+              <li className={styles.ruleItem}>
+                <div className={`${styles.ruleIconWrapper} ${styles.ruleIconAmber}`}>
                   <Star size={20} />
                 </div>
                 <div className={styles.ruleInfo}>
                   <strong>Nhận sách thành công</strong>
                   <p>Khi yêu cầu xin sách của bạn được chấp nhận.</p>
                 </div>
-                <span className={styles.rulePoints}>+25</span>
+                <span className={`${styles.rulePoints} ${styles.pointsAmber}`}>+25</span>
               </li>
             </ul>
           </div>
 
-          <div className={styles.rulesCard}>
+          <div className={`${styles.rulesCard} ${styles.exchangeCard}`}>
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+            
             <h3>Đổi điểm lấy membership</h3>
             <p>Bạn có thể dùng điểm để đổi nhanh membership nếu đủ 2.000 điểm.</p>
             <div className={styles.cardAction}>
@@ -237,6 +245,11 @@ export default function RewardsPage() {
 
         <div className={styles.rightCol}>
           <div className={`${styles.membershipCard} ${isPremium ? styles.premiumActive : ""}`}>
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
             <div className={styles.cardHeader}>
               <Crown className={styles.crownIcon} size={32} />
               <h2>Gói Tháng PRO</h2>
