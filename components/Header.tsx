@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -86,7 +86,7 @@ export default function Header() {
             fetchUnreadChatCount();
           }
         };
-        
+
         socket.on('newMessage', handleNewMessage);
         socket.on('new_notification', handleNewNotification);
 
@@ -258,7 +258,7 @@ export default function Header() {
                   href="/requests"
                   onClick={() => {
                     if (unreadNotificationCount > 0 && auth) {
-                      axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                      axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` } })
                         .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                         .catch(console.error);
                     }
@@ -289,10 +289,12 @@ export default function Header() {
                   )}
                 </Link>
 
-                <Link href="/post" className={styles.postButton}>
-                  <Plus size={14} />
-                  <span>Đăng sách</span>
-                </Link>
+                <div className={styles.btnSparkleWrapper}>
+                  <Link href="/post" className={styles.btnSparkle}>
+                    <Plus size={16} className={styles.sparkleIcon} />
+                    <span>Đăng sách</span>
+                  </Link>
+                </div>
 
                 <div className={styles.divider} />
 
@@ -321,14 +323,14 @@ export default function Header() {
               </div>
             )}
           </div>
-          
+
           <div className={styles.mobileActions}>
             {auth?.isLoggedIn && (
               <Link
                 href="/requests"
                 onClick={() => {
                   if (unreadNotificationCount > 0 && auth) {
-                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` } })
                       .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                       .catch(console.error);
                   }
@@ -340,9 +342,9 @@ export default function Header() {
                 {unreadNotificationCount > 0 && <span className={styles.chatBadge} />}
               </Link>
             )}
-            
-            <button 
-              className={styles.mobileMenuBtn} 
+
+            <button
+              className={styles.mobileMenuBtn}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -354,7 +356,7 @@ export default function Header() {
 
       {/* Mobile Menu Sidebar/Dropdown */}
       {isMobileMenuOpen && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -390,12 +392,12 @@ export default function Header() {
                 </div>
               </div>
 
-              <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton}`}>
-                <Plus size={16} /> Đăng sách mới
+              <Link href="/post" onClick={closeMobileMenu} className={styles.btnSparkleMobile}>
+                <Sparkles size={16} className={styles.sparkleIcon} /> Đăng sách mới
               </Link>
 
               <Link href="/chat" onClick={closeMobileMenu} className={styles.mobileActionButton}>
-                <MessageCircle size={16} /> Tin nhắn 
+                <MessageCircle size={16} /> Tin nhắn
                 {unreadChatCount > 0 && <span className={styles.mobileUnreadBadge}>{unreadChatCount}</span>}
               </Link>
 
