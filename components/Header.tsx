@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -255,8 +255,8 @@ export default function Header() {
                   title="Membership & Điểm"
                 >
                   <div className={styles.ptsPart}>
-                    <span>🪙</span>
-                    <span>{points} pts</span>
+                    <span>{points}</span>
+                    <Coins size={14} />
                   </div>
                   <div className={styles.dividerLine} />
                   <div className={styles.proPart}>
@@ -423,7 +423,10 @@ export default function Header() {
               </div>
 
               <Link href="/rewards" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobileUnifiedButton} ${isPremium ? styles.mobilePremiumActive : ""}`}>
-                <span className={styles.mobilePtsPart}>🪙 {points} pts</span>
+                <span className={styles.mobilePtsPart} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>{points}</span>
+                  <Coins size={14} />
+                </span>
                 <span className={styles.mobileDivider}>•</span>
                 <span className={styles.mobileProPart}>
                   <Crown size={14} className={styles.mobileCrownIcon} />

@@ -193,17 +193,53 @@
   }
 
   &.premiumActive {
-    border-color: rgba(245, 158, 11, 0.4);
-    background: rgba(245, 158, 11, 0.08);
+    position: relative;
+    border: 2px solid transparent;
+    background: 
+      linear-gradient(#f59e0b, #f59e0b) padding-box,
+      conic-gradient(from var(--border-angle), transparent 25%, white 50%, transparent 75%, white 100%) border-box;
+    animation: spin-led 2.5s linear infinite, pulse-white 2s ease-in-out infinite;
 
     .proPart {
-      color: #fbbf24;
+      color: white;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .ptsPart {
+      color: white;
+      position: relative;
+      z-index: 2;
+    }
+
+    .dividerLine {
+      background-color: rgba(255, 255, 255, 0.4);
+      position: relative;
+      z-index: 2;
+    }
+
+    .crownIcon {
+      color: white;
     }
 
     &:hover {
-      background: rgba(245, 158, 11, 0.15);
-      border-color: rgba(245, 158, 11, 0.7);
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+      background: 
+        linear-gradient(to right, #ea580c, #d97706, #ea580c) padding-box,
+        linear-gradient(white, white) border-box;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+      border-color: transparent;
+      animation: none;
+      
+      .proPart, .ptsPart {
+        color: white;
+      }
+      .crownIcon {
+        color: white;
+        filter: none;
+      }
+      .dividerLine {
+        background-color: rgba(255,255,255,0.4);
+      }
     }
   }
 
@@ -313,6 +349,17 @@
 @keyframes spin-led {
   to {
     --border-angle: 1turn;
+  }
+}
+
+@keyframes pulse-white {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -615,16 +662,38 @@
   }
 
   &.mobilePremiumActive {
-    background: rgba(245, 158, 11, 0.08);
-    border-color: rgba(245, 158, 11, 0.3);
+    position: relative;
+    border: 2px solid transparent;
+    background: 
+      linear-gradient(#f59e0b, #f59e0b) padding-box,
+      conic-gradient(from var(--border-angle), transparent 25%, white 50%, transparent 75%, white 100%) border-box;
+    animation: spin-led 2.5s linear infinite, pulse-white 2s ease-in-out infinite;
 
-    .mobileProPart {
-      color: #fbbf24;
+    .mobileProPart, .mobilePtsPart, .mobileDivider {
+      color: white !important;
+      position: relative;
+      z-index: 2;
+    }
+
+    .mobileCrownIcon {
+      color: white;
     }
 
     &:hover {
-      background: rgba(245, 158, 11, 0.15);
-      border-color: rgba(245, 158, 11, 0.6);
+      background: 
+        linear-gradient(to right, #ea580c, #d97706, #ea580c) padding-box,
+        linear-gradient(white, white) border-box;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+      border-color: transparent;
+      animation: none;
+      
+      .mobileProPart, .mobilePtsPart, .mobileDivider {
+        color: white !important;
+      }
+      .mobileCrownIcon {
+        color: white;
+        filter: none;
+      }
     }
   }
 }
