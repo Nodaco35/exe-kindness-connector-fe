@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { MapPin, Eye, Heart } from "lucide-react";
 import styles from "./BookCard.module.scss";
 
 export interface Book {
@@ -32,6 +33,8 @@ export interface Book {
     | undefined;
   status: string;
   viewCount: number;
+  likes?: string[];
+  createdAt?: string;
 }
 
 type StoredAuth = {
@@ -79,19 +82,15 @@ export default function BookCard({ book }: { book: Book }) {
   const ownerId = typeof book.owner === "string" ? book.owner : book.owner?._id;
   const isOwner = Boolean(auth?.isLoggedIn && ownerId && ownerId === auth.id);
 
-  let statusClass = styles.statusAvailable;
-  let displayStatus = "Có sẵn";
-
-  if (book.status?.toUpperCase() === "PENDING") {
-    statusClass = styles.statusPending;
-    displayStatus = "Đã có người xin";
-  }
-
   const advancedSlug = getSlug(book.advancedCategories);
   const topSlug = getSlug(book.categories);
   const rawSlug = advancedSlug || topSlug || book.category;
   
   const categoryText = rawSlug ? findCategoryNameBySlug(rawSlug) : "Sách chung";
+
+  const locationText = book.location 
+    ? [book.location.district, book.location.city].filter(Boolean).join(", ") || "Toàn quốc"
+    : "Toàn quốc";
 
   const cover = book.images && book.images.length > 0 ? book.images[0] : "https://via.placeholder.com/150";
 
@@ -113,34 +112,41 @@ export default function BookCard({ book }: { book: Book }) {
       </Link>
 
       <div className={styles.content}>
-        <div className={styles.metaRow}>
-          <div className={styles.categoryBadge}>{categoryText}</div>
-          <div className={`${styles.statusBadge} ${statusClass}`}>{displayStatus}</div>
-        </div>
-
         <Link href={`/books/${book._id}`} className={styles.titleLink}>
           <h3 className={styles.title}>{book.title}</h3>
         </Link>
         <p className={styles.author}>{book.author}</p>
 
-        <div className={styles.ownerInfo}>
-          <div className={styles.avatar}>
-            <img
-              src={
-                typeof book.owner === "string"
-                  ? "https://ui-avatars.com/api/?name=User&background=random"
-                  : book.owner?.avatar || "https://ui-avatars.com/api/?name=User&background=random"
-              }
-              alt={typeof book.owner === "string" ? "Người dùng" : book.owner?.fullName || "Người dùng"}
-              className={styles.avatarImg}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=User&background=random";
-              }}
-            />
+        <div className={styles.locationRow}>
+          <MapPin size={14} />
+          {locationText}
+        </div>
+
+        <div className={styles.badgesRow}>
+          <div className={styles.categoryBadge}>{categoryText}</div>
+          <div className={styles.conditionBadge}>
+            {book.codition === "NEW" ? "Mới 100%" : book.codition === "LIKE_NEW" ? "Như mới" : "Sách cũ"}
           </div>
-          <span className={styles.ownerName}>
-            {isOwner ? "Sách của Bạn" : `Sở hữu bởi ${typeof book.owner === "string" ? "Người dùng" : book.owner?.fullName || "Người dùng"}`}
-          </span>
+        </div>
+
+        <div className={styles.footerRow}>
+          <div className={styles.ownerInfo}>
+            <span className={styles.ownerName}>
+              {isOwner ? "Sách của Bạn" : typeof book.owner === "string" ? "Người dùng" : book.owner?.fullName || "Người dùng"}
+            </span>
+            <span className={styles.postDate}>
+              Ngày đăng: {new Date(book.createdAt || Date.now()).toLocaleDateString('vi-VN')}
+            </span>
+          </div>
+
+          <div className={styles.statsRow}>
+            <span className={styles.statItem}>
+              <Eye size={14} /> {book.viewCount || 0}
+            </span>
+            <span className={styles.statItem}>
+              <Heart size={14} /> {book.likes?.length || 0}
+            </span>
+          </div>
         </div>
 
         <div className={styles.actionRow}>
