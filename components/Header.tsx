@@ -310,7 +310,7 @@ export default function Header() {
                 <div className={styles.divider} />
 
                 <div className={styles.profileSection}>
-                  <Link href="/profile" className={styles.avatar}>
+                  <Link href="/profile" className={`${styles.avatar} ${isPremium ? styles.premiumAvatar : ""}`}>
                     {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
                       <img src={auth.avatar} alt="Avatar" />
                     ) : (
@@ -319,9 +319,12 @@ export default function Header() {
                       </div>
                     )}
                     {isPremium && (
-                      <div className={styles.premiumBadge}>
-                        <Crown size={10} strokeWidth={3} />
-                      </div>
+                      <>
+                        <div className={styles.premiumCrownWrapper}>
+                          <Crown size={14} className={styles.premiumCrownIcon} />
+                        </div>
+                        <span className={styles.premiumGlowRing} />
+                      </>
                     )}
                   </Link>
                   <button onClick={handleLogout} title="Đăng xuất" className={styles.logoutButton}>
@@ -400,13 +403,21 @@ export default function Header() {
           {auth?.isLoggedIn ? (
             <div className={styles.mobileUserActions}>
               <div className={styles.mobileUserInfo}>
-                <Link href="/profile" className={styles.mobileAvatar} onClick={closeMobileMenu}>
+                <Link href="/profile" className={`${styles.mobileAvatar} ${isPremium ? styles.premiumAvatar : ""}`} onClick={closeMobileMenu}>
                   {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
                     <img src={auth.avatar} alt="Avatar" />
                   ) : (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' }}>
                       <User size={20} color="white" />
                     </div>
+                  )}
+                  {isPremium && (
+                    <>
+                      <div className={styles.premiumCrownWrapper}>
+                        <Crown size={14} className={styles.premiumCrownIcon} />
+                      </div>
+                      <span className={styles.premiumGlowRing} />
+                    </>
                   )}
                 </Link>
               </div>
