@@ -494,16 +494,18 @@
 }
 
 .mobileAvatar {
+  position: relative;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   border: 2px solid rgba(255, 255, 255, 0.2);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
   }
 }
 
@@ -707,6 +709,75 @@
     object-fit: cover;
     border-radius: 9999px;
   }
+}
+
+.premiumAvatar {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, #ffd700, #ffaa00, #ff5500);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), inset 0 0 4px rgba(255, 215, 0, 0.8) !important;
+  animation: avatarPulse 2s ease-in-out infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2.5px;
+    left: -2.5px;
+    right: -2.5px;
+    bottom: -2.5px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700);
+    z-index: -1;
+    animation: rotateGlow 3s linear infinite;
+  }
+}
+
+.premiumCrownWrapper {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-10deg);
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 6px rgba(255, 215, 0, 0.65));
+  animation: crownFloat 3s ease-in-out infinite;
+}
+
+.premiumCrownIcon {
+  color: #ffd700;
+  fill: #ffd700;
+  stroke: #ffaa00;
+  stroke-width: 2.5;
+}
+
+.premiumGlowRing {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: ringExpand 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes avatarPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.85); }
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes crownFloat {
+  0%, 100% { transform: translateX(-50%) rotate(-8deg) translateY(0); }
+  50% { transform: translateX(-50%) rotate(-12deg) translateY(-2px); }
+}
+
+@keyframes ringExpand {
+  0% { transform: scale(1.0); opacity: 0.8; }
+  100% { transform: scale(1.25); opacity: 0; }
 }
 
 .premiumBadge {
