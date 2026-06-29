@@ -179,7 +179,12 @@ export default function RewardsPage() {
 
       <div className={styles.mainContent}>
         <div className={styles.leftCol}>
-          <div className={styles.rulesCard}>
+          <div className={styles.exchangeCard}>
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
             <h3>Cách tích lũy điểm</h3>
             <ul className={styles.rulesList}>
               <li className={styles.ruleItem}>
@@ -215,7 +220,7 @@ export default function RewardsPage() {
             </ul>
           </div>
 
-          <div className={`${styles.rulesCard} ${styles.exchangeCard}`}>
+          <div className={styles.exchangeCard}>
             <div className={styles.cardGlow} />
             <div className={styles.cardDotGrid} />
             <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
@@ -245,6 +250,7 @@ export default function RewardsPage() {
 
         <div className={styles.rightCol}>
           <div className={`${styles.membershipCard} ${isPremium ? styles.premiumActive : ""}`}>
+            {isPremium && <div className={styles.shimmerSweep} />}
             <div className={styles.cardGlow} />
             <div className={styles.cardDotGrid} />
             <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
