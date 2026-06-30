@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({
     totalUsers: 0,
     totalBooks: 0,
+    totalExchanges: 0,
     totalPremiumUsers: 0,
     totalRevenue: 0,
     userStatus: { active: 0, locked: 0 },
@@ -423,17 +424,17 @@ export default function AdminDashboard() {
                 <BookOpen size={20} />
               </div>
               <div className={styles.statText}>
-                <span>Tổng Sách</span>
+                <span>Sách Sẵn Có</span>
                 <strong>{stats.totalBooks}</strong>
               </div>
             </div>
             <div className={`${styles.statCard} ${styles.premiumCard}`}>
               <div className={styles.statIconWrapper}>
-                <CreditCard size={20} />
+                <CheckCircle size={20} />
               </div>
               <div className={styles.statText}>
-                <span>Tổng Premium</span>
-                <strong>{stats.totalPremiumUsers || 0}</strong>
+                <span>Tổng Giao Dịch</span>
+                <strong>{stats.totalExchanges || 0}</strong>
               </div>
             </div>
             <div className={`${styles.statCard} ${styles.revenueCard}`}>
@@ -441,8 +442,8 @@ export default function AdminDashboard() {
                 <TrendingUp size={20} />
               </div>
               <div className={styles.statText}>
-                <span>Tổng Doanh Thu</span>
-                <strong>{(stats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                <span>Doanh Thu & Premium</span>
+                <strong>{(stats.totalRevenue || 0).toLocaleString('vi-VN')} đ / {stats.totalPremiumUsers || 0}</strong>
               </div>
             </div>
           </div>

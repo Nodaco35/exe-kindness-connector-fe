@@ -157,7 +157,7 @@ export default function RewardsPage() {
     return <div className={styles.container}><div className={styles.loading}>Đang tải...</div></div>;
   }
 
-  const membershipPrice = qrData?.amount || 5000;
+  const membershipPrice = qrData?.amount || 50000;
 
   return (
     <div className={styles.container}>
@@ -337,7 +337,7 @@ export default function RewardsPage() {
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Số tiền</span>
                     <span className={`${styles.infoValue} ${styles.priceAmount}`}>
-                      {(qrData?.amount ?? 5000).toLocaleString("vi-VN")} VND
+                      {(qrData?.amount ?? 50000).toLocaleString("vi-VN")} VND
                     </span>
                   </div>
 
