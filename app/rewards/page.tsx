@@ -162,9 +162,45 @@ export default function RewardsPage() {
   return (
     <div className={styles.container}>
       <div className={styles.heroSection}>
-        <div className={styles.heroGlow} />
+        <div className={styles.heroGlow1} />
+        <div className={styles.heroGlow2} />
         <div className={styles.heroDotGrid} />
+
+        {/* Floating background elements */}
+        {/* Glass Bubble Float Icons */}
+        <div className={`${styles.floatingElement} ${styles.float1}`}>
+          <Gift size={28} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float2}`}>
+          <BookOpen size={24} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float3}`}>
+          <Sparkles size={20} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float4}`}>
+          <Crown size={26} />
+        </div>
+
+        {/* Raw Float Icons (No border/radius) */}
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat1}`}>
+          <Sparkles size={26} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat2}`}>
+          <ShieldCheck size={28} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat3}`}>
+          <Star size={24} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat4}`}>
+          <BookOpen size={22} />
+        </div>
+
         <div className={styles.heroContent}>
+          <div className={styles.badgeTag}>
+            <Sparkles size={14} className={styles.badgeIcon} />
+            <span>KINDNESS CONNECTOR</span>
+          </div>
+
           <h1 className={styles.title}>Đổi Điểm Thưởng</h1>
           <p className={styles.subtitle}>Tích lũy điểm khi chia sẻ sách để nhận các đặc quyền đặc biệt.</p>
 
@@ -225,7 +261,7 @@ export default function RewardsPage() {
             <div className={styles.cardDotGrid} />
             <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
             <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
-            
+
             <h3>Đổi điểm lấy membership</h3>
             <p>Bạn có thể dùng điểm để đổi nhanh membership nếu đủ 2.000 điểm.</p>
             <div className={styles.cardAction}>
