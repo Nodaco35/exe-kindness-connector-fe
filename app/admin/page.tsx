@@ -424,8 +424,8 @@ export default function AdminDashboard() {
                 <BookOpen size={20} />
               </div>
               <div className={styles.statText}>
-                <span>Sách Sẵn Có</span>
-                <strong>{stats.totalBooks}</strong>
+                <span>Sách (Sẵn có/Giao dịch)</span>
+                <strong>{stats.bookStatus?.available || 0}/{stats.bookStatus?.requested || 0}</strong>
               </div>
             </div>
             <div className={`${styles.statCard} ${styles.premiumCard}`}>

@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -242,7 +242,27 @@ export default function Header() {
                 </Link>
               );
             })}
+          
           </nav>
+
+          <form 
+            className={styles.searchFormDesktop} 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const q = formData.get('q');
+              if (q) router.push(`/search?q=${encodeURIComponent(q.toString())}`);
+            }}
+          >
+            <Search size={16} className={styles.searchIconInput} />
+            <input 
+              name="q" 
+              placeholder="Tìm kiếm sách..." 
+              className={styles.searchInputField}
+              defaultValue={typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('q') || '' : ''}
+            />
+          </form>
+
         </div>
 
         <div className={styles.rightSection}>
