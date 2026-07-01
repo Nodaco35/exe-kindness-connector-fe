@@ -82,6 +82,30 @@ export default function AdminDashboard() {
   const [savingBook, setSavingBook] = useState(false);
   const [modalError, setModalError] = useState("");
 
+  const [testEmail, setTestEmail] = useState("");
+  const [testEmailMsg, setTestEmailMsg] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testEmail || !testEmailMsg) return alert("Vui lòng nhập đủ email và nội dung");
+    try {
+      setSendingEmail(true);
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const auth = JSON.parse(authStr!);
+      await axios.post(`${API_URL}/admin/send-email`, { email: testEmail, message: testEmailMsg }, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      alert("Gửi email thành công!");
+      setTestEmail("");
+      setTestEmailMsg("");
+    } catch (err: any) {
+      alert("Gửi email thất bại: " + (err.response?.data?.message || err.message));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const activeCategoryGroup = bookCategories.find(c => c.slug === editFormData.category);
 
   const handleEditChange = (e: any) => {
@@ -603,6 +627,38 @@ export default function AdminDashboard() {
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Chưa có dữ liệu lượt xem sách.</p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Row 3: Test Email Feature */}
+              <div className={styles.dashboardRow} style={{ marginTop: '2rem' }}>
+                <div className={styles.dashboardCard} style={{ width: '100%' }}>
+                  <h3>Test Gửi Email Thông Báo</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sử dụng tính năng này để kiểm tra xem hệ thống đã gửi email thành công hay chưa.</p>
+                  <form onSubmit={handleSendTestEmail} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <input
+                      type="email"
+                      placeholder="Nhập email người nhận..."
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      style={{ padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)' }}
+                      required
+                    />
+                    <textarea
+                      placeholder="Nhập nội dung tin nhắn gửi từ Admin..."
+                      value={testEmailMsg}
+                      onChange={(e) => setTestEmailMsg(e.target.value)}
+                      style={{ padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', minHeight: '100px', resize: 'vertical', background: 'var(--card-bg)' }}
+                      required
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={sendingEmail}
+                      style={{ padding: '0.8rem', borderRadius: '0.5rem', backgroundColor: '#007bff', color: 'white', fontWeight: 'bold', border: 'none', cursor: sendingEmail ? 'not-allowed' : 'pointer', opacity: sendingEmail ? 0.7 : 1, width: 'fit-content' }}
+                    >
+                      {sendingEmail ? "Đang gửi..." : "Gửi Email Test"}
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>
