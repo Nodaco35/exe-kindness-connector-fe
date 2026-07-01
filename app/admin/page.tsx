@@ -54,10 +54,12 @@ export default function AdminDashboard() {
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({ fullName: '', avatar: '' });
   const [searchQuery, setSearchQuery] = useState("");
+  const [bookStatusFilter, setBookStatusFilter] = useState("ALL");
   const [usersPage, setUsersPage] = useState(1);
   const [booksPage, setBooksPage] = useState(1);
   const [membershipsPage, setMembershipsPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+  const BOOKS_PER_PAGE = 10;
   const USERS_PER_PAGE = 10;
 
   const [editingBook, setEditingBook] = useState<any | null>(null);
@@ -72,7 +74,9 @@ export default function AdminDashboard() {
     location: {
       district: "Cầu Giấy",
       city: "Hà Nội"
-    }
+    },
+    createdAt: "",
+    status: ""
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [savingBook, setSavingBook] = useState(false);
@@ -120,7 +124,9 @@ export default function AdminDashboard() {
       location: {
         district: book.location?.district || "Cầu Giấy",
         city: book.location?.city || "Hà Nội"
-      }
+      },
+      createdAt: book.createdAt ? new Date(book.createdAt).toISOString().split('T')[0] : "",
+      status: book.status || "AVAILABLE"
     });
     setModalError("");
   };
@@ -150,7 +156,7 @@ export default function AdminDashboard() {
 
       const urls = await Promise.all(uploadPromises);
       const validUrls = urls.filter(url => Boolean(url));
-      
+
       if (validUrls.length > 0) {
         setEditFormData(prev => ({
           ...prev,
@@ -173,7 +179,7 @@ export default function AdminDashboard() {
     try {
       const authStr = localStorage.getItem("bookshare_auth_v3");
       const auth = JSON.parse(authStr!);
-      
+
       const payload = {
         title: editFormData.title,
         author: editFormData.author,
@@ -182,7 +188,9 @@ export default function AdminDashboard() {
         images: editFormData.images,
         categories: editFormData.category ? [editFormData.category] : [],
         advancedCategories: editFormData.advancedCategory ? [editFormData.advancedCategory] : [],
-        location: editFormData.location
+        location: editFormData.location,
+        status: editFormData.status,
+        ...(editFormData.createdAt ? { createdAt: new Date(editFormData.createdAt).toISOString() } : {})
       };
 
       await axios.patch(`${API_URL}/book/${editingBook._id}`, payload, {
@@ -205,6 +213,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setSearchQuery("");
+    setBookStatusFilter("ALL");
     setUsersPage(1);
     setBooksPage(1);
     setMembershipsPage(1);
@@ -216,18 +225,31 @@ export default function AdminDashboard() {
     setMembershipsPage(1);
   }, [searchQuery]);
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredBooks = books.filter(book => 
-    book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.owner?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.owner?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBooks = books.filter(book =>
+    (bookStatusFilter === "ALL" || book.status === bookStatusFilter)
+  ).sort((a, b) => {
+    const statusOrder: Record<string, number> = {
+      "AVAILABLE": 1,
+      "REQUESTED": 2,
+      "EXCHANGED": 3,
+      "HIDDEN": 4
+    };
+    const orderA = statusOrder[a.status] || 99;
+    const orderB = statusOrder[b.status] || 99;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    const dateA = new Date(a.createdAt || 0).getTime();
+    const dateB = new Date(b.createdAt || 0).getTime();
+    return dateB - dateA;
+  });
 
-  const filteredMemberships = memberships.filter(m => 
+  const filteredMemberships = memberships.filter(m =>
     m.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.transactionId?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -235,7 +257,7 @@ export default function AdminDashboard() {
 
   const renderPagination = (currentPage: number, totalPages: number, onPageChange: (page: number) => void) => {
     if (totalPages <= 1) return null;
-    
+
     return (
       <div className={styles.pagination}>
         <button
@@ -270,7 +292,7 @@ export default function AdminDashboard() {
         return;
       }
       const auth = JSON.parse(authStr);
-      
+
       if (auth.role !== "ADMIN") {
         alert("Bạn không có quyền truy cập trang này!");
         router.push("/");
@@ -278,7 +300,7 @@ export default function AdminDashboard() {
       }
 
       const headers = { Authorization: `Bearer ${auth.token}` };
-      
+
       const [statsRes, usersRes, booksRes, profileRes, membershipsRes] = await Promise.all([
         axios.get(`${API_URL}/admin/stats`, { headers }),
         axios.get(`${API_URL}/admin/users`, { headers }),
@@ -363,31 +385,31 @@ export default function AdminDashboard() {
           <h2>Admin Panel</h2>
         </div>
         <nav className={styles.nav}>
-          <button 
+          <button
             className={`${styles.navItem} ${activeTab === "DASHBOARD" ? styles.active : ""}`}
             onClick={() => setActiveTab("DASHBOARD")}
           >
             <TrendingUp size={18} /> Tổng Quan Hệ Thống
           </button>
-          <button 
+          <button
             className={`${styles.navItem} ${activeTab === "USERS" ? styles.active : ""}`}
             onClick={() => setActiveTab("USERS")}
           >
             <Users size={18} /> Quản lý Người Dùng
           </button>
-          <button 
+          <button
             className={`${styles.navItem} ${activeTab === "BOOKS" ? styles.active : ""}`}
             onClick={() => setActiveTab("BOOKS")}
           >
             <BookOpen size={18} /> Quản lý Sách
           </button>
-          <button 
+          <button
             className={`${styles.navItem} ${activeTab === "MEMBERSHIPS" ? styles.active : ""}`}
             onClick={() => setActiveTab("MEMBERSHIPS")}
           >
             <CreditCard size={18} /> Quản lý Premium
           </button>
-          <button 
+          <button
             className={`${styles.navItem} ${activeTab === "PROFILE" ? styles.active : ""}`}
             onClick={() => setActiveTab("PROFILE")}
           >
@@ -425,7 +447,7 @@ export default function AdminDashboard() {
               </div>
               <div className={styles.statText}>
                 <span>Sách (Sẵn có/Giao dịch)</span>
-                <strong>{stats.bookStatus?.available || 0}/{stats.bookStatus?.requested || 0}</strong>
+                <strong>{stats.bookStatus?.available || 0} / {stats.bookStatus?.requested || 0}</strong>
               </div>
             </div>
             <div className={`${styles.statCard} ${styles.premiumCard}`}>
@@ -588,26 +610,42 @@ export default function AdminDashboard() {
 
           {activeTab !== "PROFILE" && activeTab !== "DASHBOARD" && (
             <div className={styles.tableHeaderActions}>
-              <div className={styles.searchWrapper}>
-                <Search size={18} className={styles.searchIcon} />
-                <input
-                  type="text"
-                  placeholder={
-                    activeTab === "USERS" ? "Tìm người dùng theo tên hoặc email..." :
-                    activeTab === "BOOKS" ? "Tìm sách theo tiêu đề hoặc người đăng..." :
-                    activeTab === "MEMBERSHIPS" ? "Tìm theo tên, email hoặc mã giao dịch..." :
-                    "Tìm kiếm..."
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={styles.searchInput}
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className={styles.clearSearchBtn}>
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
+              {activeTab !== "BOOKS" && (
+                <div className={styles.searchWrapper}>
+                  <Search size={18} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    placeholder={
+                      activeTab === "USERS" ? "Tìm người dùng theo tên hoặc email..." :
+                        activeTab === "MEMBERSHIPS" ? "Tìm theo tên, email hoặc mã giao dịch..." :
+                          "Tìm kiếm..."
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className={styles.clearSearchBtn}>
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
+              {activeTab === "BOOKS" && (
+                <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                  <select
+                    value={bookStatusFilter}
+                    onChange={(e) => setBookStatusFilter(e.target.value)}
+                    style={{ padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', marginLeft: '1rem', background: 'var(--card-bg)' }}
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="AVAILABLE">AVAILABLE (Sẵn có)</option>
+                    <option value="REQUESTED">REQUESTED (Đang giao dịch)</option>
+                    <option value="EXCHANGED">EXCHANGED (Đã trao đổi)</option>
+                    <option value="HIDDEN">HIDDEN (Đã ẩn)</option>
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
@@ -672,11 +710,12 @@ export default function AdminDashboard() {
                       <th>Người đăng</th>
                       <th>Tình trạng</th>
                       <th>Trạng thái hiển thị</th>
+                      <th>Ngày đăng</th>
                       <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBooks.slice((booksPage - 1) * ITEMS_PER_PAGE, booksPage * ITEMS_PER_PAGE).map(book => (
+                    {filteredBooks.slice((booksPage - 1) * BOOKS_PER_PAGE, booksPage * BOOKS_PER_PAGE).map(book => (
                       <tr key={book._id}>
                         <td style={{ fontWeight: 600 }}>{book.title}</td>
                         <td>{book.owner?.email || 'N/A'}</td>
@@ -689,6 +728,9 @@ export default function AdminDashboard() {
                           <span className={`${styles.statusBadge} ${styles[book.status]}`}>
                             {BOOK_STATUS_MAP[book.status] || book.status}
                           </span>
+                        </td>
+                        <td>
+                          {book.createdAt ? new Date(book.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
                         </td>
                         <td>
                           <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -710,7 +752,7 @@ export default function AdminDashboard() {
                     ))}
                     {filteredBooks.length === 0 && (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                        <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
                           Không tìm thấy cuốn sách nào phù hợp.
                         </td>
                       </tr>
@@ -718,7 +760,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-              {renderPagination(booksPage, Math.ceil(filteredBooks.length / ITEMS_PER_PAGE), setBooksPage)}
+              {renderPagination(booksPage, Math.ceil(filteredBooks.length / BOOKS_PER_PAGE), setBooksPage)}
             </>
           )}
 
@@ -781,19 +823,19 @@ export default function AdminDashboard() {
                 </div>
                 <div className={styles.inputGroup}>
                   <label>Họ và tên</label>
-                  <input 
-                    type="text" 
-                    value={profileForm.fullName} 
-                    onChange={e => setProfileForm({...profileForm, fullName: e.target.value})}
+                  <input
+                    type="text"
+                    value={profileForm.fullName}
+                    onChange={e => setProfileForm({ ...profileForm, fullName: e.target.value })}
                     required
                   />
                 </div>
                 <div className={styles.inputGroup}>
                   <label>URL Ảnh đại diện</label>
-                  <input 
-                    type="text" 
-                    value={profileForm.avatar} 
-                    onChange={e => setProfileForm({...profileForm, avatar: e.target.value})}
+                  <input
+                    type="text"
+                    value={profileForm.avatar}
+                    onChange={e => setProfileForm({ ...profileForm, avatar: e.target.value })}
                   />
                 </div>
                 <button type="submit" className={styles.saveBtn}>Lưu thay đổi</button>
@@ -812,10 +854,10 @@ export default function AdminDashboard() {
               <h2>Sửa thông tin sách</h2>
               <p>Chỉnh sửa các chi tiết của bài post sách</p>
             </div>
-            
+
             <form onSubmit={handleSaveBook} className={styles.modalForm}>
               {modalError && <div className={styles.modalError}>{modalError}</div>}
-              
+
               <div className={styles.modalInputGroup}>
                 <label>Tên sách</label>
                 <input
@@ -842,6 +884,35 @@ export default function AdminDashboard() {
 
               <div className={styles.modalRowGroup}>
                 <div className={styles.modalInputGroup}>
+                  <label>Ngày đăng</label>
+                  <input
+                    type="date"
+                    name="createdAt"
+                    value={editFormData.createdAt}
+                    onChange={handleEditChange}
+                    className={styles.modalInput}
+                  />
+                </div>
+
+                <div className={styles.modalInputGroup}>
+                  <label>Trạng thái</label>
+                  <CustomSelect
+                    value={editFormData.status}
+                    onChange={(val) => handleEditChange({ target: { name: "status", value: val } })}
+                    options={[
+                      { value: "AVAILABLE", label: "Sẵn có" },
+                      { value: "REQUESTED", label: "Đang giao dịch" },
+                      { value: "EXCHANGED", label: "Đã trao đổi" },
+                      { value: "HIDDEN", label: "Đã ẩn" }
+                    ]}
+                    placeholder="Chọn Trạng thái..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalRowGroup}>
+                <div className={styles.modalInputGroup}>
                   <label>Tình trạng</label>
                   <CustomSelect
                     value={editFormData.codition}
@@ -855,7 +926,7 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
-                
+
                 <div className={styles.modalInputGroup}>
                   <label>Khu vực (Quận)</label>
                   <CustomSelect
@@ -882,7 +953,7 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
-                
+
                 <div className={styles.modalInputGroup}>
                   <label>Thể loại phụ</label>
                   <CustomSelect
@@ -913,8 +984,8 @@ export default function AdminDashboard() {
                   {editFormData.images.map((imgUrl, idx) => (
                     <div key={idx} className={styles.imagePreviewCard}>
                       <img src={imgUrl} alt={`Preview ${idx + 1}`} />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setEditFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
                         className={styles.removeImageBtn}
                       >
@@ -927,7 +998,7 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   ))}
-                  
+
                   <div className={styles.uploadImagePlaceholder}>
                     <input
                       type="file"
