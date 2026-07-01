@@ -42,7 +42,10 @@ export default function Login() {
         window.dispatchEvent(new Event("auth-updated"));
         
         const params = new URLSearchParams(window.location.search);
-        const callbackUrl = params.get("callbackUrl") || "/";
+        let callbackUrl = params.get("callbackUrl") || "/";
+        if (response.data.user.role === "ADMIN") {
+          callbackUrl = "/admin";
+        }
         router.push(callbackUrl);
       }
     } catch (err: any) {
