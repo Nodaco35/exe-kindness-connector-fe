@@ -12,6 +12,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Kindness Connector - BookShare",
   description: "Mạng lưới trao đổi sách cũ 0đ",
+  icons: {
+    icon: "/images/favicon/favicon.png"
+  }
 };
 
 export default function RootLayout({
