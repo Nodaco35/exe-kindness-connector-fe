@@ -1,5 +1,6 @@
 "use client";
 
+import { HANOI_DISTRICTS } from "@/config/districts";
 import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -44,38 +45,7 @@ type BookWithCategories = Book & {
   advancedCategories?: CategoryRef[];
 };
 
-const HANOI_DISTRICTS = [
-  "Quận Ba Đình",
-  "Quận Hoàn Kiếm",
-  "Quận Tây Hồ",
-  "Quận Long Biên",
-  "Quận Cầu Giấy",
-  "Quận Đống Đa",
-  "Quận Hai Bà Trưng",
-  "Quận Hoàng Mai",
-  "Quận Thanh Xuân",
-  "Quận Nam Từ Liêm",
-  "Quận Bắc Từ Liêm",
-  "Quận Hà Đông",
-  "Thị xã Sơn Tây",
-  "Huyện Sóc Sơn",
-  "Huyện Đông Anh",
-  "Huyện Gia Lâm",
-  "Huyện Thanh Trì",
-  "Huyện Mê Linh",
-  "Huyện Ba Vì",
-  "Huyện Phúc Thọ",
-  "Huyện Đan Phượng",
-  "Huyện Hoài Đức",
-  "Huyện Quốc Oai",
-  "Huyện Thạch Thất",
-  "Huyện Chương Mỹ",
-  "Huyện Thanh Oai",
-  "Huyện Thường Tín",
-  "Huyện Phú Xuyên",
-  "Huyện Ứng Hòa",
-  "Huyện Mỹ Đức",
-];
+
 
 const categoryGroups = bookCategories as CategoryGroup[];
 

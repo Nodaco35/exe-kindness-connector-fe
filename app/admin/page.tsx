@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL } from "@/config/api";
+import { HANOI_DISTRICTS } from "@/config/districts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard } from "lucide-react";
@@ -30,7 +31,7 @@ export default function AdminDashboard() {
     category: "",
     advancedCategory: "",
     location: {
-      district: "Cầu Giấy",
+      district: "Quận Cầu Giấy",
       city: "Hà Nội"
     }
   });
@@ -549,12 +550,14 @@ export default function AdminDashboard() {
                   <CustomSelect
                     value={editFormData.location.district}
                     onChange={(val) => handleEditLocationChange({ target: { name: "district", value: val } })}
-                    options={[
-                      { value: "Cầu Giấy", label: "Cầu Giấy" },
-                      { value: "Đống Đa", label: "Đống Đa" },
-                      { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
-                      { value: "Hà Đông", label: "Hà Đông" }
-                    ]}
+                    options={((): { value: string; label: string }[] => {
+                      const baseOptions = HANOI_DISTRICTS.map(d => ({ value: d, label: d }));
+                      const currentDist = editFormData.location.district;
+                      if (currentDist && !baseOptions.some(opt => opt.value === currentDist)) {
+                        return [...baseOptions, { value: currentDist, label: currentDist }];
+                      }
+                      return baseOptions;
+                    })()}
                   />
                 </div>
               </div>

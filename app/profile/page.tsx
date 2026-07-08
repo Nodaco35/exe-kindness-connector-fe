@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL } from "@/config/api";
+import { HANOI_DISTRICTS } from "@/config/districts";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -40,7 +41,7 @@ export default function ProfilePage() {
     fullName: "",
     avatar: "",
     bio: "",
-    district: "Cầu Giấy",
+    district: "Quận Cầu Giấy",
     city: "Hà Nội",
   });
 
@@ -83,7 +84,7 @@ export default function ProfilePage() {
         fullName: user.fullName || "",
         avatar: user.avatar || "",
         bio: user.bio || "",
-        district: addr?.district || "Cầu Giấy",
+        district: addr?.district || "Quận Cầu Giấy",
         city: addr?.city || "Hà Nội"
       });
 
@@ -348,12 +349,15 @@ export default function ProfilePage() {
                         onChange={handleChange}
                         className={styles.select}
                       >
-                        <option value="Cầu Giấy">Cầu Giấy</option>
-                        <option value="Đống Đa">Đống Đa</option>
-                        <option value="Hai Bà Trưng">Hai Bà Trưng</option>
-                        <option value="Hà Đông">Hà Đông</option>
-                        <option value="Thanh Xuân">Thanh Xuân</option>
-                        <option value="Tây Hồ">Tây Hồ</option>
+                        {((): React.ReactNode[] => {
+                          const baseDistricts = [...HANOI_DISTRICTS];
+                          if (formData.district && !baseDistricts.includes(formData.district)) {
+                            baseDistricts.push(formData.district);
+                          }
+                          return baseDistricts.map(d => (
+                            <option key={d} value={d}>{d}</option>
+                          ));
+                        })()}
                       </select>
                     </div>
                   </div>
