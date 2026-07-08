@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck, X, Copy, Check } from "lucide-react";
+import { Crown, Star, ArrowRight, BookOpen, Gift, ShieldCheck, X, Copy, Check, Sparkles } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/config/api";
 import styles from "./page.module.scss";
@@ -34,7 +34,7 @@ export default function RewardsPage() {
     if (showModal && !isPremium) {
       interval = setInterval(async () => {
         await fetchProfile(true);
-      }, 5000);
+      }, 50000);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -93,7 +93,7 @@ export default function RewardsPage() {
     }
   };
 
-  const handleBuyMembershipByMoney = async () => {
+  const handleBuyMembershipByMoney = async (packageType: string) => {
     try {
       setPaying(true);
       const authStr = localStorage.getItem("bookshare_auth_v3");
@@ -102,6 +102,7 @@ export default function RewardsPage() {
       const response = await axios.post(
         `${API_URL}/membership/checkout`,
         {
+          packageType,
           successUrl: `${window.location.origin}/rewards?payment=success`,
           errorUrl: `${window.location.origin}/rewards?payment=error`,
           cancelUrl: `${window.location.origin}/rewards?payment=cancel`,
@@ -157,62 +158,234 @@ export default function RewardsPage() {
     return <div className={styles.container}><div className={styles.loading}>Đang tải...</div></div>;
   }
 
-  const membershipPrice = qrData?.amount || 5000;
+  const membershipPrice = qrData?.amount || 50000;
 
   return (
     <div className={styles.container}>
       <div className={styles.heroSection}>
+        <div className={styles.heroGlow1} />
+        <div className={styles.heroGlow2} />
+        <div className={styles.heroDotGrid} />
+
+        {/* Floating background elements */}
+        {/* Glass Bubble Float Icons */}
+        <div className={`${styles.floatingElement} ${styles.float1}`}>
+          <Gift size={28} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float2}`}>
+          <BookOpen size={24} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float3}`}>
+          <Sparkles size={20} />
+        </div>
+        <div className={`${styles.floatingElement} ${styles.float4}`}>
+          <Crown size={26} />
+        </div>
+
+        {/* Raw Float Icons (No border/radius) */}
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat1}`}>
+          <Sparkles size={26} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat2}`}>
+          <ShieldCheck size={28} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat3}`}>
+          <Star size={24} />
+        </div>
+        <div className={`${styles.rawFloatElement} ${styles.rawFloat4}`}>
+          <BookOpen size={22} />
+        </div>
+
         <div className={styles.heroContent}>
+          <div className={styles.badgeTag}>
+            <Sparkles size={14} className={styles.badgeIcon} />
+            <span>KINDNESS CONNECTOR</span>
+          </div>
+
           <h1 className={styles.title}>Đổi Điểm Thưởng</h1>
           <p className={styles.subtitle}>Tích lũy điểm khi chia sẻ sách để nhận các đặc quyền đặc biệt.</p>
 
           <div className={styles.pointsPill}>
-            <Star className={styles.pointsIcon} size={24} />
+            <div className={styles.pointsPillGlow} />
+            <Star className={styles.pointsIcon} size={28} />
             <span className={styles.pointsValue}>{points}</span>
             <span className={styles.pointsLabel}>Điểm hiện tại</span>
           </div>
         </div>
       </div>
 
-      <div className={styles.mainContent}>
-        <div className={styles.leftCol}>
-          <div className={styles.rulesCard}>
+      {/* Gói thanh toán Premium */}
+      <div className={styles.pricingSection}>
+        <div className={styles.pricingGrid}>
+          {/* Gói 1: 3 Tháng */}
+          <div className={`${styles.membershipCard} ${isPremium ? styles.premiumActive : ""}`}>
+            {isPremium && <div className={styles.shimmerSweep} />}
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
+            <div className={styles.cardHeader}>
+              <Crown className={styles.crownIcon} size={32} />
+              <div>
+                <h2>Gói 3 Tháng PRO</h2>
+                <span className={styles.packageBadge}>Cơ bản</span>
+              </div>
+              {isPremium && <span className={styles.activeBadge}>Đang kích hoạt</span>}
+            </div>
+
+            <p className={styles.cardDesc}>Tận hưởng đầy đủ các tính năng cao cấp của Kindness Connector trong thời hạn 3 tháng.</p>
+
+            <ul className={styles.featuresList}>
+              <li><ShieldCheck size={18} /> Nhắn tin ưu tiên</li>
+              <li><ShieldCheck size={18} /> Huy hiệu PRO nổi bật</li>
+              <li><ShieldCheck size={18} /> Được đề xuất sách tự động</li>
+            </ul>
+
+            <div className={styles.cardAction}>
+              <div className={styles.cost}>
+                <strong>300.000đ</strong>
+                <span>100.000đ / tháng</span>
+              </div>
+              <button
+                className={styles.buyBtn}
+                onClick={() => handleBuyMembershipByMoney('3M')}
+                disabled={paying || isPremium}
+              >
+                {paying ? "Đang xử lý..." : isPremium ? "Đang sử dụng" : "Thanh toán"}
+                {!isPremium && <ArrowRight size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Gói 2: 6 Tháng */}
+          <div className={`${styles.membershipCard} ${styles.highlightCard} ${isPremium ? styles.premiumActive : ""}`}>
+            {isPremium && <div className={styles.shimmerSweep} />}
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
+            <div className={styles.cardHeader}>
+              <Crown className={styles.crownIcon} size={32} />
+              <div>
+                <h2>Gói 6 Tháng PRO</h2>
+                <span className={`${styles.packageBadge} ${styles.badgePopular}`}>Phổ biến nhất</span>
+              </div>
+              {isPremium && <span className={styles.activeBadge}>Đang kích hoạt</span>}
+            </div>
+
+            <p className={styles.cardDesc}>Trở thành thành viên PRO 6 tháng để nhận được mức giá ưu đãi và các đặc quyền đặc biệt.</p>
+
+            <ul className={styles.featuresList}>
+              <li><ShieldCheck size={18} /> Nhắn tin ưu tiên</li>
+              <li><ShieldCheck size={18} /> Huy hiệu PRO nổi bật</li>
+              <li><ShieldCheck size={18} /> Được đề xuất sách tự động</li>
+            </ul>
+
+            <div className={styles.cardAction}>
+              <div className={styles.cost}>
+                <strong>500.000đ</strong>
+                <span>~83.000đ / tháng</span>
+              </div>
+              <button
+                className={styles.buyBtn}
+                onClick={() => handleBuyMembershipByMoney('6M')}
+                disabled={paying || isPremium}
+              >
+                {paying ? "Đang xử lý..." : isPremium ? "Đang sử dụng" : "Thanh toán"}
+                {!isPremium && <ArrowRight size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Gói 3: 1 Năm */}
+          <div className={`${styles.membershipCard} ${isPremium ? styles.premiumActive : ""}`}>
+            {isPremium && <div className={styles.shimmerSweep} />}
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
+            <div className={styles.cardHeader}>
+              <Crown className={styles.crownIcon} size={32} />
+              <div>
+                <h2>Gói 12 Tháng PRO</h2>
+                <span className={`${styles.packageBadge} ${styles.badgeBestValue}`}>Tiết kiệm nhất</span>
+              </div>
+              {isPremium && <span className={styles.activeBadge}>Đang kích hoạt</span>}
+            </div>
+
+            <p className={styles.cardDesc}>Gói dài hạn tốt nhất, tiết kiệm chi phí tối đa lên đến 25% so với đăng ký cơ bản.Đăng ký ngay hôm nay.</p>
+
+            <ul className={styles.featuresList}>
+              <li><ShieldCheck size={18} /> Nhắn tin ưu tiên</li>
+              <li><ShieldCheck size={18} /> Huy hiệu PRO nổi bật</li>
+              <li><ShieldCheck size={18} /> Được đề xuất sách tự động</li>
+            </ul>
+
+            <div className={styles.cardAction}>
+              <div className={styles.cost}>
+                <strong>900.000đ</strong>
+                <span>75.000đ / tháng</span>
+              </div>
+              <button
+                className={styles.buyBtn}
+                onClick={() => handleBuyMembershipByMoney('1Y')}
+                disabled={paying || isPremium}
+              >
+                {paying ? "Đang xử lý..." : isPremium ? "Đang sử dụng" : "Thanh toán"}
+                {!isPremium && <ArrowRight size={18} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p className={styles.errorText} style={{ textAlign: "center", marginTop: "2rem", marginBottom: "3rem" }}>
+          Thanh toán qua chuyển khoản ngân hàng. Gói PRO sẽ được kích hoạt tự động ngay sau khi nhận được tiền chuyển khoản.
+        </p>
+      </div>
+
+      {/* Cách tích điểm & Đổi điểm */}
+      <div className={styles.rewardsSection}>
+        <div className={styles.rewardsGrid}>
+          <div className={styles.exchangeCard}>
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
             <h3>Cách tích lũy điểm</h3>
             <ul className={styles.rulesList}>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--success-bg)", color: "var(--success-text)" }}>
+              <li className={styles.ruleItem}>
+                <div className={`${styles.ruleIconWrapper} ${styles.ruleIconSuccess}`}>
                   <BookOpen size={20} />
                 </div>
                 <div className={styles.ruleInfo}>
                   <strong>Đăng sách mới</strong>
                   <p>Mỗi cuốn sách bạn đăng lên hệ thống.</p>
                 </div>
-                <span className={styles.rulePoints}>+10</span>
+                <span className={`${styles.rulePoints} ${styles.pointsSuccess}`}>+10</span>
               </li>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--primary-light-bg)", color: "var(--primary)" }}>
+              <li className={styles.ruleItem}>
+                <div className={`${styles.ruleIconWrapper} ${styles.ruleIconPrimary}`}>
                   <Gift size={20} />
                 </div>
                 <div className={styles.ruleInfo}>
                   <strong>Tặng sách thành công</strong>
                   <p>Khi bạn chấp nhận yêu cầu xin sách.</p>
                 </div>
-                <span className={styles.rulePoints}>+50</span>
-              </li>
-              <li>
-                <div className={styles.ruleIconWrapper} style={{ backgroundColor: "var(--amber-bg)", color: "var(--amber-text)" }}>
-                  <Star size={20} />
-                </div>
-                <div className={styles.ruleInfo}>
-                  <strong>Nhận sách thành công</strong>
-                  <p>Khi yêu cầu xin sách của bạn được chấp nhận.</p>
-                </div>
-                <span className={styles.rulePoints}>+25</span>
+                <span className={`${styles.rulePoints} ${styles.pointsPrimary}`}>+200</span>
               </li>
             </ul>
           </div>
 
-          <div className={styles.rulesCard}>
+          <div className={styles.exchangeCard}>
+            <div className={styles.cardGlow} />
+            <div className={styles.cardDotGrid} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleTopLeft}`} size={20} />
+            <Sparkles className={`${styles.sparkleDecor} ${styles.sparkleBottomRight}`} size={20} />
+
             <h3>Đổi điểm lấy membership</h3>
             <p>Bạn có thể dùng điểm để đổi nhanh membership nếu đủ 2.000 điểm.</p>
             <div className={styles.cardAction}>
@@ -232,41 +405,6 @@ export default function RewardsPage() {
             {points < 2000 && !isPremium && (
               <p className={styles.errorText}>Bạn cần thêm {2000 - points} điểm để đổi gói này.</p>
             )}
-          </div>
-        </div>
-
-        <div className={styles.rightCol}>
-          <div className={`${styles.membershipCard} ${isPremium ? styles.premiumActive : ""}`}>
-            <div className={styles.cardHeader}>
-              <Crown className={styles.crownIcon} size={32} />
-              <h2>Gói Tháng PRO</h2>
-              {isPremium && <span className={styles.activeBadge}>Đang kích hoạt</span>}
-            </div>
-
-            <p className={styles.cardDesc}>Tận hưởng tất cả các tính năng cao cấp của Kindness Connector không giới hạn.</p>
-
-            <ul className={styles.featuresList}>
-              <li><ShieldCheck size={18} /> Nhắn tin ưu tiên</li>
-              <li><ShieldCheck size={18} /> Huy hiệu PRO nổi bật</li>
-              <li><ShieldCheck size={18} /> Được đề xuất sách tự động</li>
-            </ul>
-
-            <div className={styles.cardAction}>
-              <div className={styles.cost}>
-                <strong>{membershipPrice.toLocaleString("vi-VN")}</strong>
-                <span>VND / tháng</span>
-              </div>
-              <button
-                className={styles.buyBtn}
-                onClick={handleBuyMembershipByMoney}
-                disabled={paying || isPremium}
-              >
-                {paying ? "Đang xử lý..." : isPremium ? "Đang sử dụng" : "Thanh toán"}
-                {!isPremium && <ArrowRight size={18} />}
-              </button>
-            </div>
-
-            <p className={styles.errorText}>Thanh toán qua chuyển khoản ngân hàng. Membership sẽ được kích hoạt sau khi giao dịch được xác nhận.</p>
           </div>
         </div>
       </div>
@@ -318,7 +456,7 @@ export default function RewardsPage() {
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Số tiền</span>
                     <span className={`${styles.infoValue} ${styles.priceAmount}`}>
-                      {(qrData?.amount ?? 5000).toLocaleString("vi-VN")} VND
+                      {(qrData?.amount ?? 50000).toLocaleString("vi-VN")} VND
                     </span>
                   </div>
 

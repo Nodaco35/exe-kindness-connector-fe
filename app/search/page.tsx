@@ -1,8 +1,8 @@
 "use client";
 
-import { HANOI_DISTRICTS } from "@/config/districts";
 import { API_URL } from "@/config/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   ChevronLeft,
@@ -15,10 +15,9 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import bookCategories from "../book_categories.json";
-import BookCard, { Book } from "../components/BookCard";
-import HeroCarousel from "../components/HeroCarousel";
-import styles from "./page.module.scss";
+import bookCategories from "../../book_categories.json";
+import BookCard, { Book } from "../../components/BookCard";
+import styles from "../page.module.scss";
 
 type SubCategory = {
   name: string;
@@ -45,7 +44,38 @@ type BookWithCategories = Book & {
   advancedCategories?: CategoryRef[];
 };
 
-
+const HANOI_DISTRICTS = [
+  "Quận Ba Đình",
+  "Quận Hoàn Kiếm",
+  "Quận Tây Hồ",
+  "Quận Long Biên",
+  "Quận Cầu Giấy",
+  "Quận Đống Đa",
+  "Quận Hai Bà Trưng",
+  "Quận Hoàng Mai",
+  "Quận Thanh Xuân",
+  "Quận Nam Từ Liêm",
+  "Quận Bắc Từ Liêm",
+  "Quận Hà Đông",
+  "Thị xã Sơn Tây",
+  "Huyện Sóc Sơn",
+  "Huyện Đông Anh",
+  "Huyện Gia Lâm",
+  "Huyện Thanh Trì",
+  "Huyện Mê Linh",
+  "Huyện Ba Vì",
+  "Huyện Phúc Thọ",
+  "Huyện Đan Phượng",
+  "Huyện Hoài Đức",
+  "Huyện Quốc Oai",
+  "Huyện Thạch Thất",
+  "Huyện Chương Mỹ",
+  "Huyện Thanh Oai",
+  "Huyện Thường Tín",
+  "Huyện Phú Xuyên",
+  "Huyện Ứng Hòa",
+  "Huyện Mỹ Đức",
+];
 
 const categoryGroups = bookCategories as CategoryGroup[];
 
@@ -95,9 +125,14 @@ const categoryFilterMatches = (
   return includesSlug(topLevel, topCategory) && includesSlug(advancedLevel, subCategory);
 };
 
-export default function Home() {
+function SearchContent() {
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get("q") || "";
   const [books, setBooks] = useState<BookWithCategories[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialQ);
+  useEffect(() => {
+    setSearchTerm(searchParams.get("q") || "");
+  }, [searchParams]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState("Đang tải vị trí...");
   const [userDistrict, setUserDistrict] = useState("");
@@ -248,8 +283,7 @@ export default function Home() {
 
   return (
     <div className={styles.pageContainer}>
-      <HeroCarousel />
-
+      
       <section className={styles.categoriesSection}>
         <div className={styles.categoriesHeader}>
           <div>
@@ -655,5 +689,14 @@ export default function Home() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div style={{padding: "2rem", textAlign: "center"}}>Đang tải...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

@@ -321,6 +321,18 @@ function PostBookContent() {
                 {fetchingInfo ? "Đang tìm..." : <><Search size={16}/> Tìm theo ISBN</>}
               </button>
             </div>
+            <div style={{ 
+              marginTop: "0.5rem", 
+              padding: "0.75rem", 
+              backgroundColor: "rgba(253, 230, 138, 0.5)", 
+              border: "1px solid rgba(252, 211, 77, 0.8)", 
+              borderRadius: "0.5rem",
+              color: "#b45309",
+              fontSize: "0.8125rem",
+              lineHeight: "1.5"
+            }}>
+              <strong>💡 Lưu ý:</strong> Hiện tại hệ thống đang hỗ trợ tốt nhất việc quét mã sách chuẩn <strong>ISBN (bắt đầu bằng 978)</strong> để tự động điền thông tin. Hệ thống chưa hỗ trợ tìm kiếm nội dung chuẩn <strong>EAN-13 (bắt đầu bằng 893)</strong>. Nếu mã vạch sách của bạn là 893, xin vui lòng nhập tay thông tin bên dưới. Mong bạn thông cảm vì sự bất tiện này!
+            </div>
           </div>
 
           <div className={styles.inputGroup}>

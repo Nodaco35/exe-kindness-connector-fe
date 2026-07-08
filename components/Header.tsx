@@ -4,7 +4,7 @@ import { API_URL } from "@/config/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
@@ -86,7 +86,7 @@ export default function Header() {
             fetchUnreadChatCount();
           }
         };
-        
+
         socket.on('newMessage', handleNewMessage);
         socket.on('new_notification', handleNewNotification);
 
@@ -242,23 +242,54 @@ export default function Header() {
                 </Link>
               );
             })}
+          
           </nav>
+
+          <form 
+            className={styles.searchFormDesktop} 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const q = formData.get('q');
+              if (q) router.push(`/search?q=${encodeURIComponent(q.toString())}`);
+            }}
+          >
+            <Search size={16} className={styles.searchIconInput} />
+            <input 
+              name="q" 
+              placeholder="Tìm kiếm sách..." 
+              className={styles.searchInputField}
+              defaultValue={typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('q') || '' : ''}
+            />
+          </form>
+
         </div>
 
         <div className={styles.rightSection}>
           <div className={styles.desktopActions}>
             {auth?.isLoggedIn ? (
               <>
-                <div className={styles.pointsPill} onClick={() => router.push("/rewards")}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
+                <Link
+                  href="/rewards"
+                  className={`${styles.unifiedMembershipButton} ${isPremium ? styles.premiumActive : ""} ${pathname === "/rewards" ? styles.active : ""}`}
+                  title="Membership & Điểm"
+                >
+                  <div className={styles.ptsPart}>
+                    <span>{points}</span>
+                    <Coins size={14} />
+                  </div>
+                  <div className={styles.dividerLine} />
+                  <div className={styles.proPart}>
+                    <Crown size={14} className={styles.crownIcon} />
+                    <span>{isPremium ? "PRO Active" : "Gói PRO"}</span>
+                  </div>
+                </Link>
 
                 <Link
                   href="/requests"
                   onClick={() => {
                     if (unreadNotificationCount > 0 && auth) {
-                      axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                      axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` } })
                         .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                         .catch(console.error);
                     }
@@ -289,20 +320,31 @@ export default function Header() {
                   )}
                 </Link>
 
-                <Link href="/post" className={styles.postButton}>
-                  <Plus size={14} />
-                  <span>Đăng sách</span>
-                </Link>
+                <div className={styles.btnSparkleWrapper}>
+                  <Link href="/post" className={styles.btnSparkle}>
+                    <Plus size={16} className={styles.sparkleIcon} />
+                    <span>Đăng sách</span>
+                  </Link>
+                </div>
 
                 <div className={styles.divider} />
 
                 <div className={styles.profileSection}>
-                  <Link href="/profile" className={styles.avatar}>
-                    <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
-                    {isPremium && (
-                      <div className={styles.premiumBadge}>
-                        <Crown size={10} strokeWidth={3} />
+                  <Link href="/profile" className={`${styles.avatar} ${isPremium ? styles.premiumAvatar : ""}`}>
+                    {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
+                      <img src={auth.avatar} alt="Avatar" />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                        <User size={20} color="white" />
                       </div>
+                    )}
+                    {isPremium && (
+                      <>
+                        <div className={styles.premiumCrownWrapper}>
+                          <Crown size={14} className={styles.premiumCrownIcon} />
+                        </div>
+                        <span className={styles.premiumGlowRing} />
+                      </>
                     )}
                   </Link>
                   <button onClick={handleLogout} title="Đăng xuất" className={styles.logoutButton}>
@@ -321,14 +363,14 @@ export default function Header() {
               </div>
             )}
           </div>
-          
+
           <div className={styles.mobileActions}>
             {auth?.isLoggedIn && (
               <Link
                 href="/requests"
                 onClick={() => {
                   if (unreadNotificationCount > 0 && auth) {
-                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` }})
+                    axios.patch(`${API_URL}/notification/read-all`, {}, { headers: { Authorization: `Bearer ${auth.token}` } })
                       .then(() => useNotificationStore.setState({ notifications: notifications.map(n => ({ ...n, isRead: true })) }))
                       .catch(console.error);
                   }
@@ -340,9 +382,9 @@ export default function Header() {
                 {unreadNotificationCount > 0 && <span className={styles.chatBadge} />}
               </Link>
             )}
-            
-            <button 
-              className={styles.mobileMenuBtn} 
+
+            <button
+              className={styles.mobileMenuBtn}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -354,7 +396,7 @@ export default function Header() {
 
       {/* Mobile Menu Sidebar/Dropdown */}
       {isMobileMenuOpen && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -381,21 +423,43 @@ export default function Header() {
           {auth?.isLoggedIn ? (
             <div className={styles.mobileUserActions}>
               <div className={styles.mobileUserInfo}>
-                <Link href="/profile" className={styles.mobileAvatar} onClick={closeMobileMenu}>
-                  <img src={auth.avatar || "https://i.pravatar.cc/150?u=99"} alt="Avatar" />
+                <Link href="/profile" className={`${styles.mobileAvatar} ${isPremium ? styles.premiumAvatar : ""}`} onClick={closeMobileMenu}>
+                  {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
+                    <img src={auth.avatar} alt="Avatar" />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                      <User size={20} color="white" />
+                    </div>
+                  )}
+                  {isPremium && (
+                    <>
+                      <div className={styles.premiumCrownWrapper}>
+                        <Crown size={14} className={styles.premiumCrownIcon} />
+                      </div>
+                      <span className={styles.premiumGlowRing} />
+                    </>
+                  )}
                 </Link>
-                <div className={styles.pointsPill} onClick={() => { router.push("/rewards"); closeMobileMenu(); }}>
-                  <span>🪙</span>
-                  <span>{points} pts</span>
-                </div>
               </div>
 
-              <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton}`}>
+              <Link href="/rewards" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobileUnifiedButton} ${isPremium ? styles.mobilePremiumActive : ""}`}>
+                <span className={styles.mobilePtsPart} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>{points}</span>
+                  <Coins size={14} />
+                </span>
+                <span className={styles.mobileDivider}>•</span>
+                <span className={styles.mobileProPart}>
+                  <Crown size={14} className={styles.mobileCrownIcon} />
+                  <span>{isPremium ? "Tài khoản PRO" : "Đăng ký PRO"}</span>
+                </span>
+              </Link>
+
+              <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton} ${styles.btnSparkleMobile}`}>
                 <Plus size={16} /> Đăng sách mới
               </Link>
 
               <Link href="/chat" onClick={closeMobileMenu} className={styles.mobileActionButton}>
-                <MessageCircle size={16} /> Tin nhắn 
+                <MessageCircle size={16} /> Tin nhắn
                 {unreadChatCount > 0 && <span className={styles.mobileUnreadBadge}>{unreadChatCount}</span>}
               </Link>
 

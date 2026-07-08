@@ -35,18 +35,23 @@ export default function Login() {
             id: response.data.user._id,
             email: response.data.user.email,
             role: response.data.user.role,
-            avatar: response.data.user.avatar || "https://i.pravatar.cc/150?u=99",
+            avatar: response.data.user.avatar || ("https://ui-avatars.com/api/?name=" + (response.data.user.fullName || response.data.user.email || "User")),
             token: response.data.access_token,
           })
         );
         window.dispatchEvent(new Event("auth-updated"));
         
         const params = new URLSearchParams(window.location.search);
-        const callbackUrl = params.get("callbackUrl") || "/";
+        let callbackUrl = params.get("callbackUrl") || "/";
+        if (response.data.user.role === "ADMIN") {
+          callbackUrl = "/admin";
+        }
         router.push(callbackUrl);
       }
     } catch (err: any) {
-      if (err.response?.status === 401) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.status === 401) {
         setError("Email hoặc mật khẩu không chính xác.");
       } else {
         setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");

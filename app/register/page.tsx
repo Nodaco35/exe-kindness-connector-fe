@@ -44,7 +44,7 @@ export default function Register() {
             id: loginRes.data.user._id,
             email: loginRes.data.user.email,
             role: loginRes.data.user.role,
-            avatar: loginRes.data.user.avatar || "https://i.pravatar.cc/150?u=99",
+            avatar: loginRes.data.user.avatar || ("https://ui-avatars.com/api/?name=" + (loginRes.data.user.fullName || loginRes.data.user.email || "User")),
             token: loginRes.data.access_token,
           })
         );
