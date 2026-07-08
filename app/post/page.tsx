@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL } from "@/config/api";
+import { HANOI_DISTRICTS } from "@/config/districts";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -31,7 +32,7 @@ function PostBookContent() {
     category: "",
     advancedCategory: "",
     location: {
-      district: "Cầu Giấy",
+      district: "Quận Cầu Giấy",
       city: "Hà Nội"
     }
   });
@@ -81,7 +82,7 @@ function PostBookContent() {
             category: book.categories?.[0] || "",
             advancedCategory: book.advancedCategories?.[0] || "",
             location: {
-              district: book.location?.district || "Cầu Giấy",
+              district: book.location?.district || "Quận Cầu Giấy",
               city: book.location?.city || "Hà Nội"
             }
           });
@@ -382,12 +383,7 @@ function PostBookContent() {
                 value={formData.location.district}
                 onChange={(val) => handleLocationChange({ target: { name: "district", value: val } })}
                 options={((): { value: string; label: string }[] => {
-                  const baseOptions = [
-                    { value: "Cầu Giấy", label: "Cầu Giấy" },
-                    { value: "Đống Đa", label: "Đống Đa" },
-                    { value: "Hai Bà Trưng", label: "Hai Bà Trưng" },
-                    { value: "Hà Đông", label: "Hà Đông" }
-                  ];
+                  const baseOptions = HANOI_DISTRICTS.map(d => ({ value: d, label: d }));
                   const currentDist = formData.location.district;
                   if (currentDist && !baseOptions.some(opt => opt.value === currentDist)) {
                     return [...baseOptions, { value: currentDist, label: currentDist }];
