@@ -2,9 +2,9 @@
 
 import { API_URL } from "@/config/api";
 import { useEffect, useState, use } from "react";
-import { BookOpen, MapPin, Users, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, MapPin, Users, Heart, Share2, ChevronLeft, ChevronRight, X, History, Award } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import styles from "./page.module.scss";
@@ -27,6 +27,36 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
   const [comments, setComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  const pathname = usePathname();
+  const [isDonorModalOpen, setIsDonorModalOpen] = useState(false);
+  const [donorProfile, setDonorProfile] = useState<any>(null);
+  const [donorExchanges, setDonorExchanges] = useState<any[]>([]);
+  const [loadingDonorData, setLoadingDonorData] = useState(false);
+
+  const handleOpenDonorModal = async () => {
+    if (!book?.owner?._id) return;
+    setIsDonorModalOpen(true);
+    setLoadingDonorData(true);
+    try {
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const headers = authStr ? { Authorization: `Bearer ${JSON.parse(authStr).token}` } : {};
+
+      // Fetch public profile
+      const profileRes = await axios.get(`${API_URL}/user/${book.owner._id}/public-profile`, { headers });
+      setDonorProfile(profileRes.data);
+
+      // Fetch exchange history (requires auth)
+      if (authStr) {
+        const exchangesRes = await axios.get(`${API_URL}/exchange/user/${book.owner._id}`, { headers });
+        setDonorExchanges(exchangesRes.data);
+      }
+    } catch (err) {
+      console.error("Lỗi lấy thông tin người cho sách:", err);
+    } finally {
+      setLoadingDonorData(false);
+    }
+  };
 
   useEffect(() => {
     const authStr = localStorage.getItem("bookshare_auth_v3");
@@ -281,7 +311,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
           <h1 className={styles.title}>{book.title}</h1>
           <p className={styles.author}>Tác giả: {book.author}</p>
 
-          <div className={styles.ownerInfo}>
+          <div className={styles.ownerInfo} onClick={handleOpenDonorModal} title="Xem trang cá nhân người cho sách" style={{ cursor: "pointer" }}>
             <img
               src={book.owner?.avatar || "https://ui-avatars.com/api/?name=User&background=random"}
               alt="Owner"
@@ -394,6 +424,91 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
           )}
         </div>
       </div>
+
+      {/* Modal Người cho sách */}
+      <AnimatePresence>
+        {isDonorModalOpen && (
+          <div className={styles.modalOverlay} onClick={() => setIsDonorModalOpen(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25 }}
+              className={styles.donorModal}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className={styles.closeModalBtn} onClick={() => setIsDonorModalOpen(false)}>
+                <X size={20} />
+              </button>
+
+              <div className={styles.donorHeader}>
+                <img 
+                  src={donorProfile?.avatar || book.owner?.avatar || "https://ui-avatars.com/api/?name=User&background=random"} 
+                  alt={donorProfile?.fullName || book.owner?.fullName} 
+                  className={styles.donorAvatar}
+                />
+                <div className={styles.donorMeta}>
+                  <h2>{donorProfile?.fullName || book.owner?.fullName}</h2>
+                  <div className={styles.reputationScore}>
+                    <Award size={16} className={styles.scoreIcon} />
+                    <span>Điểm uy tín: <strong>{donorProfile?.reputationScore || 0}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              {donorProfile?.bio && (
+                <div className={styles.donorBio}>
+                  <h3>Tiểu sử</h3>
+                  <p>{donorProfile.bio}</p>
+                </div>
+              )}
+
+              <div className={styles.donorHistorySection}>
+                <h3>Lịch sử giao dịch</h3>
+                {!auth ? (
+                  <p className={styles.authPrompt}>
+                    Bạn phải <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`} className={styles.loginLink}>Đăng nhập</Link> để xem lịch sử giao dịch.
+                  </p>
+                ) : loadingDonorData ? (
+                  <p className={styles.loadingText}>Đang tải lịch sử giao dịch...</p>
+                ) : donorExchanges.length === 0 ? (
+                  <p className={styles.emptyText}>Chưa thực hiện giao dịch nào trên hệ thống.</p>
+                ) : (
+                  <div className={styles.donorExchangesList}>
+                    {donorExchanges.map((ex) => {
+                      const isOwner = ex.owner?._id === book.owner._id;
+                      const partnerName = isOwner ? ex.requester?.fullName : ex.owner?.fullName;
+                      const roleLabel = isOwner ? "Tặng sách" : "Xin sách";
+                      const dateStr = new Date(ex.createdAt).toLocaleDateString("vi-VN");
+
+                      return (
+                        <div key={ex._id} className={styles.donorExchangeCard}>
+                          <div className={styles.donorExchangeInfo}>
+                            <h4>{ex.book?.title || "Sách đã bị xóa"}</h4>
+                            <p>
+                              {roleLabel} • {isOwner ? "Người nhận: " : "Người tặng: "} <strong>{partnerName || "Người dùng ẩn danh"}</strong>
+                            </p>
+                          </div>
+                          <div className={styles.donorExchangeStatusDate}>
+                            <span className={`${styles.statusBadge} ${styles[ex.status]}`}>
+                              {ex.status === "PENDING" && "Đang chờ"}
+                              {ex.status === "ACCEPTED" && "Đã chấp nhận"}
+                              {ex.status === "REJECTED" && "Đã từ chối"}
+                              {ex.status === "CANCELED" && "Đã hủy"}
+                              {ex.status === "COMPLETED" && "Thành công"}
+                            </span>
+                            <span className={styles.date}>{dateStr}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

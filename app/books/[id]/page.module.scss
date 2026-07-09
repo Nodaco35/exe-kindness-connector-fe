@@ -174,8 +174,17 @@
   gap: 1rem;
   padding: 1rem;
   background-color: var(--bg-color-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   margin-bottom: 2rem;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+
+  &:hover {
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-level-1);
+    transform: translateY(-1px);
+  }
 }
 
 .avatar {
@@ -519,6 +528,228 @@
 
   span {
     font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.donorModal {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow-level-2);
+  width: 100%;
+  max-width: 550px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: var(--bg-color-alt);
+    border-color: var(--border-subtle);
+  }
+}
+
+.closeModalBtn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+
+  &:hover {
+    background-color: var(--bg-color-surface);
+    color: var(--text-main);
+  }
+}
+
+.donorHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.donorAvatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.donorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+  }
+}
+
+.reputationScore {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+
+  .scoreIcon {
+    color: #f59e0b;
+  }
+
+  strong {
+    color: #ea580c;
+  }
+}
+
+.donorBio {
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+  }
+
+  p {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+
+.donorHistorySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+  }
+}
+
+.authPrompt {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1.5rem;
+  background-color: var(--bg-color-surface);
+  border-radius: var(--radius-lg);
+
+  .loginLink {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: underline;
+
+    &:hover {
+      color: var(--primary-hover);
+    }
+  }
+}
+
+.loadingText, .emptyText {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.donorExchangesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 9999px;
+  }
+}
+
+.donorExchangeCard {
+  background-color: var(--bg-color-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--transition-fast);
+
+  &:hover {
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-level-1);
+  }
+}
+
+.donorExchangeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+  }
+
+  p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+
+    strong {
+      color: var(--text-main);
+    }
+  }
+}
+
+.donorExchangeStatusDate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+
+  .date {
+    font-size: 0.7rem;
     color: var(--text-muted);
   }
 }

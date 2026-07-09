@@ -108,46 +108,56 @@
   }
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .acceptBtn, .rejectBtn, .chatBtn {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
+  gap: 0.35rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full);
   font-size: 0.875rem;
-  font-weight: 600;
-  transition: var(--transition-fast);
+  font-weight: 700;
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-level-1);
 }
 
 .acceptBtn {
   background-color: var(--primary);
   color: white;
+  box-shadow: 0 4px 10px rgba(0, 168, 255, 0.15);
 
   &:hover {
     background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 168, 255, 0.25);
   }
 }
 
 .rejectBtn {
-  background-color: var(--bg-color-surface);
+  background-color: var(--bg-color);
   color: var(--danger);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  box-shadow: none;
 
   &:hover {
-    background-color: rgba(244, 63, 94, 0.05);
+    background-color: var(--danger-bg);
+    border-color: transparent;
+    transform: translateY(-1px);
   }
 }
 
 .chatBtn {
   background-color: var(--success-bg);
   color: var(--success-text);
+  box-shadow: 0 4px 10px rgba(22, 101, 52, 0.1);
 
   &:hover {
     background-color: #dcfce7;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(22, 101, 52, 0.2);
   }
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
 }

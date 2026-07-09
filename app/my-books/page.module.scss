@@ -14,7 +14,7 @@
 .card {
   background-color: var(--bg-color);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--card-radius);
   padding: 2.5rem;
   box-shadow: var(--shadow-level-1);
 }
@@ -50,17 +50,19 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   background-color: var(--primary);
   color: white;
   font-weight: 700;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   font-size: 0.875rem;
-  transition: all 0.2s;
+  transition: var(--transition-base);
+  box-shadow: 0 4px 12px rgba(0, 168, 255, 0.15);
 
   &:hover {
     background-color: var(--primary-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 168, 255, 0.25);
   }
 }
 
@@ -129,6 +131,7 @@
     padding: 1.25rem 1rem;
     border-bottom: 1px solid var(--border-subtle);
     vertical-align: middle;
+    transition: var(--transition-fast);
   }
 
   tr:hover td {
@@ -147,10 +150,10 @@
   width: 3.5rem;
   height: 4.75rem;
   object-fit: cover;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--bg-color-alt);
   box-shadow: var(--shadow-level-1);
-  transition: opacity 0.2s;
+  transition: all 0.2s ease;
 }
 
 .imgHidden {
@@ -172,6 +175,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.15s ease;
 
   &:hover {
     color: var(--primary);
@@ -195,8 +199,8 @@
   color: var(--primary);
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--radius-full);
 }
 
 .conditionBadge {
@@ -205,8 +209,8 @@
   color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-full);
 }
 
 .badge {
@@ -270,17 +274,18 @@
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
   background-color: var(--bg-color);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
 
   &:hover {
     background-color: var(--primary-light-bg);
     color: var(--primary);
     border-color: var(--primary-light);
+    transform: scale(1.05);
   }
 }
 
@@ -289,5 +294,6 @@
     background-color: var(--danger-bg);
     color: var(--danger);
     border-color: rgba(186, 26, 26, 0.3);
+    transform: scale(1.05);
   }
 }
