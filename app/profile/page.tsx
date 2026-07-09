@@ -2,8 +2,8 @@
 
 import { API_URL } from "@/config/api";
 import { HANOI_DISTRICTS } from "@/config/districts";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   User, 
   MapPin, 
@@ -14,16 +14,19 @@ import {
   Key, 
   BookOpen, 
   HeartOff,
-  UserCheck
+  UserCheck,
+  History
 } from "lucide-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./page.module.scss";
 
-type TabType = "info" | "favorites" | "password";
+type TabType = "info" | "favorites" | "password" | "transactions";
 
-export default function ProfilePage() {
+function ProfileComponent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<TabType>("info");
   
   // Loading & Saving States
@@ -31,11 +34,13 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [exchangesLoading, setExchangesLoading] = useState(false);
 
   // Data States
   const [authData, setAuthData] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [favoritesCount, setFavoritesCount] = useState(0);
+  const [exchanges, setExchanges] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -57,10 +62,36 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    if (tabParam === "transactions" || tabParam === "favorites" || tabParam === "password" || tabParam === "info") {
+      setActiveTab(tabParam as TabType);
+    }
+  }, [tabParam]);
+
+  useEffect(() => {
     if (activeTab === "favorites") {
       fetchFavorites();
+    } else if (activeTab === "transactions") {
+      fetchExchanges();
     }
   }, [activeTab]);
+
+  const fetchExchanges = async () => {
+    try {
+      setExchangesLoading(true);
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      if (!authStr) return;
+      const auth = JSON.parse(authStr);
+
+      const res = await axios.get(`${API_URL}/exchange`, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      setExchanges(res.data);
+    } catch (err) {
+      console.error("Lỗi lấy danh sách giao dịch", err);
+    } finally {
+      setExchangesLoading(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -269,6 +300,12 @@ export default function ProfilePage() {
             onClick={() => setActiveTab("favorites")}
           >
             <Heart size={16} /> Sách đã tim ({favoritesCount})
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === "transactions" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("transactions")}
+          >
+            <History size={16} /> Lịch sử giao dịch
           </button>
           <button 
             className={`${styles.tab} ${activeTab === "password" ? styles.activeTab : ""}`}
@@ -528,9 +565,77 @@ export default function ProfilePage() {
               </motion.form>
             )}
 
+            {/* 4. TRANSACTIONS TAB */}
+            {activeTab === "transactions" && (
+              <motion.div 
+                key="transactions"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={styles.transactionsSection}
+              >
+                <h3 className={styles.sectionTitle}>Lịch sử giao dịch</h3>
+                {exchangesLoading ? (
+                  <div className={styles.subLoading}>Đang tải lịch sử giao dịch...</div>
+                ) : exchanges.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <History size={40} className={styles.emptyIcon} />
+                    <p>Bạn chưa thực hiện giao dịch nào!</p>
+                  </div>
+                ) : (
+                  <div className={styles.exchangesList}>
+                    {exchanges.map((ex) => {
+                      const isOwner = ex.owner?._id === authData?.id;
+                      const partner = isOwner ? ex.requester : ex.owner;
+                      const roleLabel = isOwner ? "Tặng sách" : "Nhận sách";
+                      const dateStr = new Date(ex.createdAt).toLocaleDateString("vi-VN");
+                      
+                      return (
+                        <div key={ex._id} className={styles.exchangeCard}>
+                          <img 
+                            src={ex.book?.images?.[0] || "/placeholder-book.png"} 
+                            alt={ex.book?.title} 
+                            className={styles.bookImg}
+                          />
+                          <div className={styles.exchangeInfo}>
+                            <h4 className={styles.bookTitle}>{ex.book?.title || "Sách đã bị xóa"}</h4>
+                            <p className={styles.partnerName}>
+                              {isOwner ? "Người nhận: " : "Người tặng: "}
+                              <strong>{partner?.fullName || "Người dùng ẩn danh"}</strong>
+                            </p>
+                            <span className={`${styles.roleBadge} ${isOwner ? styles.giver : styles.receiver}`}>
+                              {roleLabel}
+                            </span>
+                          </div>
+                          <div className={styles.exchangeStatusDate}>
+                            <span className={`${styles.statusBadge} ${styles[ex.status]}`}>
+                              {ex.status === "PENDING" && "Đang chờ"}
+                              {ex.status === "ACCEPTED" && "Đã chấp nhận"}
+                              {ex.status === "REJECTED" && "Đã từ chối"}
+                              {ex.status === "CANCELED" && "Đã hủy"}
+                              {ex.status === "COMPLETED" && "Thành công"}
+                            </span>
+                            <span className={styles.exchangeDate}>{dateStr}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className={styles.container}><div className={styles.loading}>Đang tải trang cá nhân...</div></div>}>
+      <ProfileComponent />
+    </Suspense>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { API_URL } from "@/config/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins, Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { MessageCircle, Plus, LogOut, Crown, Bell, Menu, X, BookMarked, Sparkles, User, Coins, Search, History } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useSocket } from "./SocketProvider";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -46,6 +46,22 @@ export default function Header() {
   const [isPremium, setIsPremium] = useState(false);
   const [auth, setAuth] = useState<StoredAuth | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const socket = useSocket();
   const notifications = useNotificationStore(state => state.notifications);
@@ -329,8 +345,12 @@ export default function Header() {
 
                 <div className={styles.divider} />
 
-                <div className={styles.profileSection}>
-                  <Link href="/profile" className={`${styles.avatar} ${isPremium ? styles.premiumAvatar : ""}`}>
+                <div className={styles.profileSection} ref={dropdownRef}>
+                  <button 
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
+                    className={`${styles.avatar} ${isPremium ? styles.premiumAvatar : ""}`}
+                    title="Menu tài khoản"
+                  >
                     {auth.avatar && !auth.avatar.includes("pravatar.cc") ? (
                       <img src={auth.avatar} alt="Avatar" />
                     ) : (
@@ -346,10 +366,41 @@ export default function Header() {
                         <span className={styles.premiumGlowRing} />
                       </>
                     )}
-                  </Link>
-                  <button onClick={handleLogout} title="Đăng xuất" className={styles.logoutButton}>
-                    <LogOut size={16} />
                   </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className={styles.dropdownMenu}
+                      >
+                        <Link href="/profile" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                          <User size={16} />
+                          <span>Xem profile</span>
+                        </Link>
+                        <Link href="/my-books" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                          <BookMarked size={16} />
+                          <span>Quản lý sách</span>
+                        </Link>
+                        <Link href="/requests" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                          <Bell size={16} />
+                          <span>Quản lý lượt xin</span>
+                        </Link>
+                        <Link href="/profile?tab=transactions" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                          <History size={16} />
+                          <span>Lịch sử giao dịch</span>
+                        </Link>
+                        <div className={styles.dropdownDivider} />
+                        <button onClick={() => { setIsDropdownOpen(false); handleLogout(); }} className={`${styles.dropdownItem} ${styles.logoutDropdownItem}`}>
+                          <LogOut size={16} className={styles.logoutIconColor} />
+                          <span>Đăng xuất</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </>
             ) : (
@@ -454,6 +505,10 @@ export default function Header() {
                 </span>
               </Link>
 
+              <Link href="/profile" onClick={closeMobileMenu} className={styles.mobileActionButton}>
+                <User size={16} /> Xem profile
+              </Link>
+
               <Link href="/post" onClick={closeMobileMenu} className={`${styles.mobileActionButton} ${styles.mobilePostButton} ${styles.btnSparkleMobile}`}>
                 <Plus size={16} /> Đăng sách mới
               </Link>
@@ -465,6 +520,15 @@ export default function Header() {
 
               <Link href="/my-books" onClick={closeMobileMenu} className={styles.mobileActionButton}>
                 <BookMarked size={16} /> Sách của tôi
+              </Link>
+
+              <Link href="/requests" onClick={closeMobileMenu} className={styles.mobileActionButton}>
+                <Bell size={16} /> Quản lý lượt xin
+                {unreadNotificationCount > 0 && <span className={styles.mobileUnreadBadge}>{unreadNotificationCount}</span>}
+              </Link>
+
+              <Link href="/profile?tab=transactions" onClick={closeMobileMenu} className={styles.mobileActionButton}>
+                <History size={16} /> Lịch sử giao dịch
               </Link>
 
               <button onClick={handleLogout} className={`${styles.mobileActionButton} ${styles.mobileLogoutButton}`}>
