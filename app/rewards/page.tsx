@@ -34,7 +34,7 @@ export default function RewardsPage() {
     if (showModal && !isPremium) {
       interval = setInterval(async () => {
         await fetchProfile(true);
-      }, 50000);
+      }, 2000);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -45,6 +45,7 @@ export default function RewardsPage() {
     if (isPremium && showModal) {
       setShowModal(false);
       alert("Kích hoạt Premium thành công! Chúc mừng bạn đã trở thành thành viên PRO.");
+      window.dispatchEvent(new Event("auth-updated"));
     }
   }, [isPremium, showModal]);
 
