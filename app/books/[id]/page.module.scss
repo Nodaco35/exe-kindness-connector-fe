@@ -1,5 +1,5 @@
 .container {
-  max-width: 1024px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
@@ -20,25 +20,32 @@
 
 .card {
   background-color: var(--bg-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl); /* Larger border radius for premium feel */
   border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-level-1);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08); /* Softer, deep shadow */
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
-  @media (min-width: 768px) {
+  @media (min-width: 992px) {
     flex-direction: row;
+    align-items: stretch;
   }
 }
 
 .imageSection {
   width: 100%;
-  background-color: var(--bg-color-surface);
+  background: linear-gradient(135deg, var(--bg-color-surface) 0%, var(--bg-color-alt) 100%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
   
-  @media (min-width: 768px) {
-    width: 40%;
+  @media (min-width: 992px) {
+    width: 42%;
     border-right: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 5rem;
+    height: calc(100vh - 8rem);
   }
 }
 
@@ -124,9 +131,9 @@
   padding: 2rem;
   width: 100%;
 
-  @media (min-width: 768px) {
-    width: 60%;
-    padding: 3rem;
+  @media (min-width: 992px) {
+    width: 58%;
+    padding: 3.5rem;
   }
 }
 
@@ -890,3 +897,43 @@
   color: var(--primary);
 }
 
+.relatedSection {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border-subtle);
+
+  .sectionTitle {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 24px;
+      background-color: var(--primary);
+      border-radius: 4px;
+    }
+  }
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}

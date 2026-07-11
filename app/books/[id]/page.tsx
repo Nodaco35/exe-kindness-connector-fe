@@ -8,6 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import styles from "./page.module.scss";
+import BookCard from "@/components/BookCard";
 
 const getDurationText = (start: string, end?: string) => {
   const startDate = new Date(start);
@@ -48,6 +49,7 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
   const [showRequests, setShowRequests] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [relatedBooks, setRelatedBooks] = useState<any[]>([]);
 
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -129,6 +131,20 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
       // Fetch comments too
       const commentsRes = await axios.get(`${API_URL}/comment/book/${id}`);
       setComments(commentsRes.data);
+
+      // Fetch related books based on level 1 category
+      if (res.data.categories && res.data.categories.length > 0) {
+        try {
+          const level1Category = res.data.categories[0];
+          const relatedRes = await axios.get(`${API_URL}/book?category=${level1Category}`);
+          const filtered = relatedRes.data
+            .filter((b: any) => b._id !== res.data._id)
+            .slice(0, 8);
+          setRelatedBooks(filtered);
+        } catch (err) {
+          console.error("Lỗi lấy sách liên quan:", err);
+        }
+      }
     } catch (err: any) {
       setError("Không tìm thấy sách hoặc đã bị xóa.");
     } finally {
@@ -579,6 +595,17 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
           </div>
         )}
       </AnimatePresence>
+
+      {relatedBooks.length > 0 && (
+        <div className={styles.relatedSection}>
+          <h2 className={styles.sectionTitle}>Sách đề xuất liên quan</h2>
+          <div className={styles.relatedGrid}>
+            {relatedBooks.map(b => (
+              <BookCard key={b._id} book={b} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
