@@ -11,7 +11,8 @@ import {
   Eye, 
   EyeOff, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
@@ -86,6 +87,26 @@ export default function MyBooksPage() {
       alert(`Đã ${newStatus === "AVAILABLE" ? "hiển thị" : "ẩn"} sách thành công!`);
     } catch (err: any) {
       alert(err.response?.data?.message || "Lỗi khi thay đổi trạng thái!");
+    }
+  };
+
+  const handleReup = async (bookId: string, title: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn đăng lại cuốn sách "${title}" lên cộng đồng để tiếp tục cho đi?`)) {
+      return;
+    }
+
+    try {
+      const authStr = localStorage.getItem("bookshare_auth_v3");
+      const auth = JSON.parse(authStr!);
+
+      await axios.patch(`${API_URL}/book/${bookId}/reup`, {}, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+
+      alert("Đăng lại sách thành công!");
+      setBooks(prev => prev.map(b => b._id === bookId ? { ...b, status: "AVAILABLE" } : b));
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Lỗi khi đăng lại sách!");
     }
   };
 
@@ -206,6 +227,17 @@ export default function MyBooksPage() {
                             title={book.status === "HIDDEN" ? "Hiển thị công khai" : "Ẩn sách"}
                           >
                             {book.status === "HIDDEN" ? <Eye size={16} /> : <EyeOff size={16} />}
+                          </button>
+                        )}
+
+                        {/* Nút Đăng lại (Re-up) */}
+                        {book.status === "EXCHANGED" && (
+                          <button 
+                            onClick={() => handleReup(book._id, book.title)}
+                            className={`${styles.actionBtn} ${styles.reupBtn}`}
+                            title="Đăng lại sách lên cộng đồng (Re-up)"
+                          >
+                            <RefreshCw size={16} />
                           </button>
                         )}
                         

@@ -9,6 +9,33 @@ import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import styles from "./page.module.scss";
 
+const getDurationText = (start: string, end?: string) => {
+  const startDate = new Date(start);
+  const endDate = end ? new Date(end) : new Date();
+  const diffTime = endDate.getTime() - startDate.getTime();
+  
+  if (diffTime <= 0) return "";
+  
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) {
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    if (diffHours === 0) return "vài phút";
+    return `${diffHours} giờ`;
+  }
+  
+  if (diffDays < 30) {
+    return `${diffDays} ngày`;
+  }
+  
+  const months = Math.floor(diffDays / 30);
+  const remainingDays = diffDays % 30;
+  
+  if (remainingDays === 0) {
+    return `${months} tháng`;
+  }
+  return `${months} tháng ${remainingDays} ngày`;
+};
+
 export default function BookDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -333,6 +360,49 @@ export default function BookDetail({ params }: { params: Promise<{ id: string }>
             <h3>Mô tả</h3>
             <p>{book.description || "Chưa có mô tả chi tiết."}</p>
           </div>
+
+          {/* Vòng đời của sách (Lịch sử sở hữu) */}
+          {book.ownershipHistory && book.ownershipHistory.length > 0 && (
+            <div className={styles.lifecycleSection}>
+              <h3>Vòng đời của sách</h3>
+              <div className={styles.timeline}>
+                {book.ownershipHistory.map((item: any, idx: number) => {
+                  const isCurrent = idx === book.ownershipHistory.length - 1;
+                  const duration = getDurationText(item.acquiredAt, item.releasedAt);
+                  
+                  return (
+                    <div key={idx} className={`${styles.timelineItem} ${isCurrent ? styles.active : ""}`}>
+                      <div className={styles.timelinePoint} />
+                      <div className={styles.timelineContent}>
+                        <div className={styles.timelineHeader}>
+                          <div className={styles.timelineOwner}>
+                            <img 
+                              src={item.owner?.avatar || "https://ui-avatars.com/api/?name=User&background=random"} 
+                              alt={item.owner?.fullName || "Chủ cũ"} 
+                              className={styles.timelineAvatar}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=User&background=random";
+                              }}
+                            />
+                            <strong>{item.owner?.fullName || "Người dùng ẩn danh"}</strong>
+                          </div>
+                          <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
+                            {idx === 0 && <span className={styles.firstOwnerBadge}>Chủ sở hữu đầu tiên</span>}
+                            {isCurrent && <span className={styles.currentBadge}>Chủ sở hữu hiện tại</span>}
+                          </div>
+                        </div>
+                        <p className={styles.timelineTime}>
+                          Sở hữu từ: {new Date(item.acquiredAt).toLocaleDateString("vi-VN")}
+                          {item.releasedAt ? ` - ${new Date(item.releasedAt).toLocaleDateString("vi-VN")}` : " - Hiện tại"}
+                          {duration && <span className={styles.timelineDuration}> ({duration})</span>}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className={styles.actionGroup}>
             {auth?.id === book.owner?._id ? (
