@@ -110,7 +110,7 @@ export default function Home() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 10;
 
   const fetchUserLocation = async () => {
     try {
@@ -251,177 +251,112 @@ export default function Home() {
       <HeroCarousel />
 
       <section className={styles.categoriesSection}>
-        <div className={styles.categoriesHeader}>
-          <div>
-            <h2>Phân loại sách</h2>
-          </div>
+        <div className={styles.categoryTabs}>
+          {categoryGroups.map((category) => (
+            <button
+              key={category.slug}
+              onClick={() => handleTopCategorySelect(category.slug)}
+              className={`${styles.categoryTab} ${selectedTopCategory === category.slug ? styles.categoryTabActive : ""}`}
+            >
+              {category.name}
+            </button>
+          ))}
           {selectedTopCategory !== "all" && (
-            <button onClick={clearFilters} className={styles.viewAllCat}>
-              Xem tất cả <ChevronRight size={14} />
+            <button onClick={clearFilters} className={styles.categoryTabClear}>
+              Xóa lọc x
             </button>
           )}
         </div>
 
-        <div className={styles.categoryGrid}>
-          {categoryGroups.map((category, index) => {
-            const isActive = selectedTopCategory === category.slug;
-
-            return (
-              <button
-                key={category.slug}
-                onClick={() => handleTopCategorySelect(category.slug)}
-                className={`${styles.categoryCard} ${isActive ? styles.categoryCardActive : ""}`}
-              >
-                <div className={styles.categoryCardHead}>
-                  <span className={styles.categoryIndex}>0{index + 1}</span>
-                  <span className={`${styles.categoryChevron} ${isActive ? styles.categoryChevronActive : ""}`}>
-                    <ChevronRight size={16} />
-                  </span>
-                </div>
-                <h3>{category.name}</h3>
-                <p>{category.description}</p>
-                <span>{category.subcategories.length} danh mục con</span>
-              </button>
-            );
-          })}
-        </div>
-
         <AnimatePresence mode="wait">
-          {activeTopCategory && (
+          {activeTopCategory && activeTopCategory.subcategories.length > 0 && (
             <motion.div
               key={activeTopCategory.slug}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className={styles.subcategoryPanel}
+              className={styles.subcategoryChips}
             >
-              <div className={styles.subcategoryPanelHeader}>
-                <div>
-                  <h3>{activeTopCategory.name}</h3>
-                  <p>{activeTopCategory.description}</p>
-                </div>
-                <button onClick={() => handleTopCategorySelect("all")} className={styles.panelReset}>
-                  Bỏ chọn
-                </button>
-              </div>
-
-              <div className={styles.subcategoryChips}>
+              <button
+                onClick={() => setSelectedSubCategory("all")}
+                className={`${styles.subcategoryChip} ${selectedSubCategory === "all" ? styles.subcategoryChipActive : ""}`}
+              >
+                Tất cả
+              </button>
+              {activeTopCategory.subcategories.map((subCategory) => (
                 <button
-                  onClick={() => setSelectedSubCategory("all")}
-                  className={`${styles.subcategoryChip} ${selectedSubCategory === "all" ? styles.subcategoryChipActive : ""
-                    }`}
+                  key={subCategory.slug}
+                  onClick={() => setSelectedSubCategory(subCategory.slug)}
+                  className={`${styles.subcategoryChip} ${selectedSubCategory === subCategory.slug ? styles.subcategoryChipActive : ""}`}
                 >
-                  Tất cả
+                  {subCategory.name}
                 </button>
-                {activeTopCategory.subcategories.map((subCategory) => {
-                  const isActive = selectedSubCategory === subCategory.slug;
-
-                  return (
-                    <button
-                      key={subCategory.slug}
-                      onClick={() => setSelectedSubCategory(subCategory.slug)}
-                      className={`${styles.subcategoryChip} ${isActive ? styles.subcategoryChipActive : ""
-                        }`}
-                    >
-                      {subCategory.name}
-                    </button>
-                  );
-                })}
-              </div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
       </section>
 
       <section className={styles.mainGridSection}>
-        <div className={styles.gridContainer}>
-          <aside className={styles.desktopSidebar}>
-            <div className={styles.filterBox}>
-              <div className={styles.filterHeader}>
-                <h3>
-                  <Filter size={16} /> Bộ lọc tìm kiếm
-                </h3>
-                <button onClick={clearFilters} className={styles.btnClearFilter}>
-                  Xóa lọc
-                </button>
-              </div>
+        <div className={styles.filterToolbar}>
+          <div className={styles.filterItem}>
+            <MapPin size={16} className={styles.filterIcon} />
+            <select
+              value={userDistrict}
+              onChange={(e) => setUserDistrict(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="">Khu vực: Toàn quốc</option>
+              {HANOI_DISTRICTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
 
-              <div className={styles.filterGroup}>
-                <h4>Khu vực (Hà Nội)</h4>
-                <select
-                  value={userDistrict}
-                  onChange={(e) => setUserDistrict(e.target.value)}
-                  className={styles.filterSelect}
-                >
-                  <option value="">Toàn quốc (Tất cả)</option>
-                  {HANOI_DISTRICTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className={styles.filterItem}>
+            <MapPin size={16} className={styles.filterIcon} />
+            <select
+              value={activeRadius}
+              onChange={(e) => setActiveRadius(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="">Bán kính: Tất cả</option>
+              <option value="1km">Trong 1km</option>
+              <option value="3km">Trong 3km</option>
+              <option value="5km">Trong 5km</option>
+              <option value="10km">Trong 10km</option>
+            </select>
+          </div>
 
-              <div className={styles.filterGroup}>
-                <h4>Bán kính xung quanh</h4>
-                <div className={styles.filterGrid2}>
-                  {["1km", "3km", "5km", "10km"].map((radius) => (
-                    <button
-                      key={radius}
-                      onClick={() => setActiveRadius(prev => prev === radius ? "" : radius)}
-                      className={`${styles.filterBtn} ${activeRadius === radius ? styles.filterBtnActive : ""}`}
-                    >
-                      {radius}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div className={styles.filterItem}>
+            <Filter size={16} className={styles.filterIcon} />
+            <select
+              value={selectedCondition}
+              onChange={(e) => setSelectedCondition(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="all">Tình trạng: Tất cả</option>
+              <option value="new">Mới / Như mới</option>
+              <option value="good">Cũ còn tốt</option>
+              <option value="old">Đã cũ</option>
+            </select>
+          </div>
+          
+          {(userDistrict || activeRadius || selectedCondition !== "all") && (
+            <button onClick={clearFilters} className={styles.btnClearFilter}>
+              Xóa lọc
+            </button>
+          )}
 
-              <div className={styles.filterGroup}>
-                <h4>Tình trạng sách</h4>
-                <div className={styles.filterGridCol}>
-                  {[
-                    { id: "all", label: "Tất cả" },
-                    { id: "new", label: "Sách mới / Như mới" },
-                    { id: "good", label: "Sách cũ còn tốt" },
-                    { id: "old", label: "Sách đã cũ" },
-                  ].map((condition) => (
-                    <button
-                      key={condition.id}
-                      onClick={() => setSelectedCondition(prev => prev === condition.id ? "all" : condition.id)}
-                      className={`${styles.filterBtnRow} ${selectedCondition === condition.id ? styles.filterBtnActive : ""
-                        }`}
-                    >
-                      {condition.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <p className={styles.resultsCount}>
+            Tìm thấy <span>{filteredBooks.length}</span> cuốn sách
+          </p>
+        </div>
 
-              <div className={styles.locationBox}>
-                <p>Vị trí hiện tại</p>
-                <div className={styles.locationTag}>
-                  <MapPin size={14} className={styles.pinIcon} />
-                  <span>{userLocation}</span>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <div className={styles.resultsArea}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.resultsCount}>
-                Tìm thấy <span>{filteredBooks.length}</span> cuốn sách
-                {filteredBooks.length > ITEMS_PER_PAGE && (
-                  <> · Trang {currentPage}/{totalPages}</>
-                )}
-              </p>
-
-              <button onClick={() => setMobileFilterOpen(true)} className={styles.mobileFilterBtn}>
-                <Filter size={14} /> Bộ lọc
-              </button>
-            </div>
+        <div className={styles.resultsArea}>
 
             {loading ? (
               <div className={styles.emptyState}>
@@ -504,7 +439,6 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
       </section>
 
       <AnimatePresence>
