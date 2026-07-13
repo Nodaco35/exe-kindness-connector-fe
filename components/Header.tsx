@@ -191,11 +191,7 @@ export default function Header() {
   const isChatRoom = pathname.startsWith("/chat/") && pathname !== "/chat";
   const isAuthPage = ["/login", "/register", "/forgot-password"].includes(pathname);
 
-  const navItems = [
-    { name: "Khám phá", path: "/" },
-    { name: "Đăng tặng", path: "/post" },
-    { name: "Tin nhắn", path: "/chat" },
-  ];
+  const navItems: { name: string; path: string }[] = [];
 
   if (auth?.role === "ADMIN") {
     navItems.push({ name: "Admin", path: "/admin" });
@@ -258,10 +254,10 @@ export default function Header() {
                 </Link>
               );
             })}
-          
           </nav>
+        </div>
 
-          <form 
+        <form 
             className={styles.searchFormDesktop} 
             onSubmit={(e) => {
               e.preventDefault();
@@ -278,8 +274,6 @@ export default function Header() {
               defaultValue={typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('q') || '' : ''}
             />
           </form>
-
-        </div>
 
         <div className={styles.rightSection}>
           <div className={styles.desktopActions}>
