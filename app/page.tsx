@@ -2,7 +2,7 @@
 
 import { HANOI_DISTRICTS } from "@/config/districts";
 import { API_URL } from "@/config/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -93,6 +93,66 @@ const categoryFilterMatches = (
   }
 
   return includesSlug(topLevel, topCategory) && includesSlug(advancedLevel, subCategory);
+};
+
+const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, width = "180px" }: any) => {
+  const [open, setOpen] = useState(false);
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o: any) => o.value === value) || { label: placeholder };
+
+  return (
+    <div className={styles.customSelectWrapper} ref={selectRef} style={{ width }}>
+      <button 
+        className={styles.customSelectTrigger} 
+        onClick={() => setOpen(!open)}
+      >
+        <div className={styles.customSelectTriggerInner}>
+          {Icon && <Icon size={16} className={styles.filterIcon} />}
+          <span>{selectedOption.label}</span>
+        </div>
+        <ChevronRight size={14} className={`${styles.customSelectChevron} ${open ? styles.customSelectChevronOpen : ""}`} />
+      </button>
+      
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            className={styles.customSelectDropdown}
+          >
+            <div
+              className={`${styles.customSelectOption} ${value === "" ? styles.customSelectOptionActive : ""}`}
+              onClick={() => { onChange(""); setOpen(false); }}
+            >
+              {placeholder}
+            </div>
+            {options.map((opt: any) => (
+              <div
+                key={opt.value}
+                className={`${styles.customSelectOption} ${value === opt.value ? styles.customSelectOptionActive : ""}`}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 export default function Home() {
@@ -300,50 +360,41 @@ export default function Home() {
 
       <section className={styles.mainGridSection}>
         <div className={styles.filterToolbar}>
-          <div className={styles.filterItem}>
-            <MapPin size={16} className={styles.filterIcon} />
-            <select
-              value={userDistrict}
-              onChange={(e) => setUserDistrict(e.target.value)}
-              className={styles.filterSelect}
-            >
-              <option value="">Khu vực: Toàn quốc</option>
-              {HANOI_DISTRICTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            value={userDistrict}
+            onChange={setUserDistrict}
+            icon={MapPin}
+            placeholder="Khu vực: Toàn quốc"
+            options={HANOI_DISTRICTS.map(d => ({ value: d, label: d }))}
+            width="210px"
+          />
 
-          <div className={styles.filterItem}>
-            <MapPin size={16} className={styles.filterIcon} />
-            <select
-              value={activeRadius}
-              onChange={(e) => setActiveRadius(e.target.value)}
-              className={styles.filterSelect}
-            >
-              <option value="">Bán kính: Tất cả</option>
-              <option value="1km">Trong 1km</option>
-              <option value="3km">Trong 3km</option>
-              <option value="5km">Trong 5km</option>
-              <option value="10km">Trong 10km</option>
-            </select>
-          </div>
+          <CustomSelect
+            value={activeRadius}
+            onChange={setActiveRadius}
+            icon={MapPin}
+            placeholder="Bán kính: Tất cả"
+            options={[
+              { value: "1km", label: "Trong 1km" },
+              { value: "3km", label: "Trong 3km" },
+              { value: "5km", label: "Trong 5km" },
+              { value: "10km", label: "Trong 10km" }
+            ]}
+            width="180px"
+          />
 
-          <div className={styles.filterItem}>
-            <Filter size={16} className={styles.filterIcon} />
-            <select
-              value={selectedCondition}
-              onChange={(e) => setSelectedCondition(e.target.value)}
-              className={styles.filterSelect}
-            >
-              <option value="all">Tình trạng: Tất cả</option>
-              <option value="new">Mới / Như mới</option>
-              <option value="good">Cũ còn tốt</option>
-              <option value="old">Đã cũ</option>
-            </select>
-          </div>
+          <CustomSelect
+            value={selectedCondition === "all" ? "" : selectedCondition}
+            onChange={(val: string) => setSelectedCondition(val || "all")}
+            icon={Filter}
+            placeholder="Tình trạng: Tất cả"
+            options={[
+              { value: "new", label: "Mới / Như mới" },
+              { value: "good", label: "Cũ còn tốt" },
+              { value: "old", label: "Đã cũ" }
+            ]}
+            width="200px"
+          />
           
           {(userDistrict || activeRadius || selectedCondition !== "all") && (
             <button onClick={clearFilters} className={styles.btnClearFilter}>

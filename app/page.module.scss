@@ -419,6 +419,84 @@
   width: 100%;
 }
 
+/* ── Custom Select ── */
+.customSelectWrapper {
+  position: relative;
+  font-family: inherit;
+}
+
+.customSelectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--bg-color-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--primary-light);
+  }
+}
+
+.customSelectTriggerInner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customSelectChevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.customSelectChevronOpen {
+  transform: rotate(90deg);
+}
+
+.customSelectDropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: 100%;
+  background: var(--bg-color);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-level-2);
+  z-index: 50;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.customSelectOption {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: var(--bg-color-surface);
+    color: var(--text-main);
+  }
+}
+
+.customSelectOptionActive {
+  background: var(--primary-light-bg);
+  color: var(--primary);
+  font-weight: 600;
+}
+
 /* ── Books Grid ── */
 .booksGrid {
   display: grid;
