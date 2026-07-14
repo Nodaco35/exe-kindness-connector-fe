@@ -4,9 +4,10 @@ import { API_URL } from "@/config/api";
 import { HANOI_DISTRICTS } from "@/config/districts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard, TrendingUp } from "lucide-react";
+import { Users, BookOpen, Ban, CheckCircle, ShieldAlert, User, LogOut, Pencil, X, Upload, Search, Image as ImageIcon, CreditCard, TrendingUp, Download } from "lucide-react";
 import axios from "axios";
 import styles from "./page.module.scss";
+import * as XLSX from "xlsx";
 import CustomSelect from "@/components/CustomSelect";
 import bookCategories from "../../book_categories.json";
 
@@ -230,6 +231,36 @@ export default function AdminDashboard() {
     } finally {
       setSavingBook(false);
     }
+  };
+
+  const handleExportUsers = () => {
+    if (filteredUsers.length === 0) return;
+    
+    const dataToExport = filteredUsers.map(user => ({
+      "ID": user._id,
+      "Họ và Tên": user.fullName || "",
+      "Email": user.email || "",
+      "Vai trò": user.role || "",
+      "Trạng thái": USER_STATUS_MAP[user.status] || user.status || "",
+      "Ngày tham gia": user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : ""
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    
+    // Auto-size columns for better readability
+    const colWidths = [
+      { wch: 25 }, // ID
+      { wch: 25 }, // Name
+      { wch: 30 }, // Email
+      { wch: 10 }, // Role
+      { wch: 15 }, // Status
+      { wch: 15 }  // Date
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Nguoi dung");
+    XLSX.writeFile(workbook, `danh_sach_nguoi_dung_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   useEffect(() => {
@@ -668,22 +699,32 @@ export default function AdminDashboard() {
           {activeTab !== "PROFILE" && activeTab !== "DASHBOARD" && (
             <div className={styles.tableHeaderActions}>
               {activeTab !== "BOOKS" && (
-                <div className={styles.searchWrapper}>
-                  <Search size={18} className={styles.searchIcon} />
-                  <input
-                    type="text"
-                    placeholder={
-                      activeTab === "USERS" ? "Tìm người dùng theo tên hoặc email..." :
-                        activeTab === "MEMBERSHIPS" ? "Tìm theo tên, email hoặc mã giao dịch..." :
-                          "Tìm kiếm..."
-                    }
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={styles.searchInput}
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className={styles.clearSearchBtn}>
-                      <X size={16} />
+                <div style={{ display: 'flex', gap: '1rem', width: '100%', alignItems: 'center' }}>
+                  <div className={styles.searchWrapper} style={{ flex: 1 }}>
+                    <Search size={18} className={styles.searchIcon} />
+                    <input
+                      type="text"
+                      placeholder={
+                        activeTab === "USERS" ? "Tìm người dùng theo tên hoặc email..." :
+                          activeTab === "MEMBERSHIPS" ? "Tìm theo tên, email hoặc mã giao dịch..." :
+                            "Tìm kiếm..."
+                      }
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={styles.searchInput}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className={styles.clearSearchBtn}>
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                  {activeTab === "USERS" && (
+                    <button 
+                      onClick={handleExportUsers}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--text-color)' }}
+                    >
+                      <Download size={16} /> Xuất Excel (CSV)
                     </button>
                   )}
                 </div>
