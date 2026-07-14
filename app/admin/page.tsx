@@ -35,6 +35,14 @@ const MEMBERSHIP_STATUS_MAP: Record<string, string> = {
   CANCELED: "Đã hủy",
 };
 
+const EXCHANGE_STATUS_MAP: Record<string, string> = {
+  PENDING: "Đang chờ",
+  ACCEPTED: "Chấp nhận",
+  COMPLETED: "Hoàn thành",
+  REJECTED: "Từ chối",
+  CANCELLED: "Đã hủy",
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<any>({
@@ -51,6 +59,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<any[]>([]);
+  const [exchanges, setExchanges] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("DASHBOARD");
   const [loading, setLoading] = useState(true);
   const [adminProfile, setAdminProfile] = useState<any>(null);
@@ -60,9 +69,11 @@ export default function AdminDashboard() {
   const [usersPage, setUsersPage] = useState(1);
   const [booksPage, setBooksPage] = useState(1);
   const [membershipsPage, setMembershipsPage] = useState(1);
+  const [exchangesPage, setExchangesPage] = useState(1);
   const MEMBERSHIPS_PER_PAGE = 10;
   const BOOKS_PER_PAGE = 10;
   const USERS_PER_PAGE = 10;
+  const EXCHANGES_PER_PAGE = 10;
 
   const [editingBook, setEditingBook] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -273,12 +284,14 @@ export default function AdminDashboard() {
     setUsersPage(1);
     setBooksPage(1);
     setMembershipsPage(1);
+    setExchangesPage(1);
   }, [activeTab]);
 
   useEffect(() => {
     setUsersPage(1);
     setBooksPage(1);
     setMembershipsPage(1);
+    setExchangesPage(1);
   }, [searchQuery]);
 
   const filteredUsers = users.filter(user =>
@@ -310,6 +323,41 @@ export default function AdminDashboard() {
     m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.transactionId?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const filteredExchanges = exchanges.filter(e =>
+    e.book?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    e.owner?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    e.requester?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleExportExchanges = () => {
+    if (filteredExchanges.length === 0) return;
+    
+    const dataToExport = filteredExchanges.map(ex => ({
+      "ID": ex._id,
+      "Tên Sách": ex.book?.title || "Sách đã xóa",
+      "Người Cho": ex.owner?.fullName || "Người dùng ẩn",
+      "Người Nhận": ex.requester?.fullName || "Người dùng ẩn",
+      "Ngày Giao Dịch": ex.createdAt ? new Date(ex.createdAt).toLocaleDateString('vi-VN') : "",
+      "Trạng Thái": EXCHANGE_STATUS_MAP[ex.status] || ex.status || ""
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    
+    const colWidths = [
+      { wch: 25 }, // ID
+      { wch: 30 }, // Tên sách
+      { wch: 25 }, // Người cho
+      { wch: 25 }, // Người nhận
+      { wch: 15 }, // Ngày giao dịch
+      { wch: 15 }  // Trạng thái
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Giao dich sach");
+    XLSX.writeFile(workbook, `danh_sach_giao_dich_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const renderPagination = (currentPage: number, totalPages: number, onPageChange: (page: number) => void) => {
     if (totalPages <= 1) return null;
@@ -357,12 +405,13 @@ export default function AdminDashboard() {
 
       const headers = { Authorization: `Bearer ${auth.token}` };
 
-      const [statsRes, usersRes, booksRes, profileRes, membershipsRes] = await Promise.all([
+      const [statsRes, usersRes, booksRes, profileRes, membershipsRes, exchangesRes] = await Promise.all([
         axios.get(`${API_URL}/admin/stats`, { headers }),
         axios.get(`${API_URL}/admin/users`, { headers }),
         axios.get(`${API_URL}/admin/books`, { headers }),
         axios.get(`${API_URL}/user/me`, { headers }),
-        axios.get(`${API_URL}/admin/memberships`, { headers })
+        axios.get(`${API_URL}/admin/memberships`, { headers }),
+        axios.get(`${API_URL}/admin/exchanges`, { headers })
       ]);
 
       setStats(statsRes.data);
@@ -370,6 +419,7 @@ export default function AdminDashboard() {
       setBooks(booksRes.data);
       setAdminProfile(profileRes.data);
       setMemberships(membershipsRes.data);
+      setExchanges(exchangesRes.data);
       if (!profileForm.fullName && !profileForm.avatar) {
         setProfileForm({ fullName: profileRes.data.fullName || '', avatar: profileRes.data.avatar || '' });
       }
@@ -466,6 +516,12 @@ export default function AdminDashboard() {
             <CreditCard size={18} /> Quản lý Premium
           </button>
           <button
+            className={`${styles.navItem} ${activeTab === "EXCHANGES" ? styles.active : ""}`}
+            onClick={() => setActiveTab("EXCHANGES")}
+          >
+            <BookOpen size={18} /> Quản lý Giao Dịch
+          </button>
+          <button
             className={`${styles.navItem} ${activeTab === "PROFILE" ? styles.active : ""}`}
             onClick={() => setActiveTab("PROFILE")}
           >
@@ -485,6 +541,7 @@ export default function AdminDashboard() {
             {activeTab === "USERS" && "Quản lý Người Dùng"}
             {activeTab === "BOOKS" && "Quản lý Sách"}
             {activeTab === "MEMBERSHIPS" && "Quản lý Premium & Doanh thu"}
+            {activeTab === "EXCHANGES" && "Quản lý Giao Dịch"}
             {activeTab === "PROFILE" && "Trang Cá Nhân"}
           </h1>
           <div className={styles.stats}>
@@ -906,6 +963,56 @@ export default function AdminDashboard() {
                 </table>
               </div>
               {renderPagination(membershipsPage, Math.ceil(filteredMemberships.length / MEMBERSHIPS_PER_PAGE), setMembershipsPage)}
+            </>
+          )}
+
+          {activeTab === "EXCHANGES" && (
+            <>
+              <div className={styles.tableActions}>
+                <div className={styles.searchBox}>
+                  <Search size={18} className={styles.searchIcon} />
+                </div>
+                <button className={styles.exportBtn} onClick={handleExportExchanges}>
+                  <Download size={18} /> Xuất Excel
+                </button>
+              </div>
+
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Sách</th>
+                      <th>Người Cho</th>
+                      <th>Người Nhận</th>
+                      <th>Ngày Giao Dịch</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredExchanges.slice((exchangesPage - 1) * EXCHANGES_PER_PAGE, exchangesPage * EXCHANGES_PER_PAGE).map((ex: any) => (
+                      <tr key={ex._id}>
+                        <td>{ex.book?.title || 'Sách đã xóa'}</td>
+                        <td>{ex.owner?.fullName || 'Người dùng ẩn'}</td>
+                        <td>{ex.requester?.fullName || 'Người dùng ẩn'}</td>
+                        <td>{ex.createdAt ? new Date(ex.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${(ex.status === 'ACCEPTED' || ex.status === 'COMPLETED') ? styles.AVAILABLE : (ex.status === 'PENDING' ? styles.REQUESTED : styles.HIDDEN)}`}>
+                            {EXCHANGE_STATUS_MAP[ex.status] || ex.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredExchanges.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                          Không tìm thấy giao dịch nào phù hợp.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination(exchangesPage, Math.ceil(filteredExchanges.length / EXCHANGES_PER_PAGE), setExchangesPage)}
             </>
           )}
 
