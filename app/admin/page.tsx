@@ -322,7 +322,7 @@ export default function AdminDashboard() {
     m.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.transactionId?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => new Date(b.startDate || 0).getTime() - new Date(a.startDate || 0).getTime());
 
   const filteredExchanges = exchanges.filter(e =>
     e.book?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -357,6 +357,39 @@ export default function AdminDashboard() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Giao dich sach");
     XLSX.writeFile(workbook, `danh_sach_giao_dich_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportMemberships = () => {
+    if (filteredMemberships.length === 0) return;
+    
+    const dataToExport = filteredMemberships.map(m => ({
+      "ID Giao dịch": m.transactionId || "N/A",
+      "Người Dùng": m.user?.fullName || "N/A",
+      "Email": m.user?.email || "N/A",
+      "Số Tiền": (m.amount || 0).toLocaleString('vi-VN') + " đ",
+      "Phương Thức": m.method || "N/A",
+      "Ngày Bắt Đầu": m.startDate ? new Date(m.startDate).toLocaleDateString('vi-VN') : "",
+      "Ngày Hết Hạn": m.endDate ? new Date(m.endDate).toLocaleDateString('vi-VN') : "",
+      "Trạng Thái": MEMBERSHIP_STATUS_MAP[m.status] || m.status || ""
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    
+    const colWidths = [
+      { wch: 20 }, // ID
+      { wch: 25 }, // Tên
+      { wch: 30 }, // Email
+      { wch: 15 }, // Tiền
+      { wch: 15 }, // Phương thức
+      { wch: 15 }, // Ngày BĐ
+      { wch: 15 }, // Ngày HH
+      { wch: 15 }  // Trạng thái
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Giao dich Premium");
+    XLSX.writeFile(workbook, `danh_sach_premium_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const renderPagination = (currentPage: number, totalPages: number, onPageChange: (page: number) => void) => {
@@ -782,6 +815,14 @@ export default function AdminDashboard() {
                       style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--text-color)' }}
                     >
                       <Download size={16} /> Xuất Excel (CSV)
+                    </button>
+                  )}
+                  {activeTab === "MEMBERSHIPS" && (
+                    <button 
+                      onClick={handleExportMemberships}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--card-bg)', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--text-color)' }}
+                    >
+                      <Download size={16} /> Xuất Excel
                     </button>
                   )}
                 </div>
